@@ -12,7 +12,7 @@ A React component library for annotating aerial images with polygon outlines in 
 - **Internal Lines** - Add lines between polygon points to define faces
 - **3D Bodies** - Extract polygons into 3D extruded building shapes with adjustable height
 - **Shadows** - Realistic shadow casting with adjustable time of day
-- **Sun Simulation** - Dynamic sun position and lighting based on time of day (6am-6pm)
+- **Sun Simulation** - Dynamic sun position using [suncalc](https://github.com/mourner/suncalc) for accurate solar positioning based on latitude, longitude, and date
 - **Polygon Management** - Hierarchical list component for managing polygons and their associated bodies
 - **Compass** - Visual compass indicator showing current camera orientation
 
@@ -102,6 +102,9 @@ All-in-one component that combines `Canvas3D` and `PolygonList` with built-in st
 | `shadows` | `boolean` | `true` | Enable shadow casting for bodies |
 | `timeOfDay` | `number` | `10` | Time of day (0-24), affects sun position and shadows |
 | `showTimeControl` | `boolean` | `true` | Show time of day slider control |
+| `latitude` | `number` | - | Latitude for realistic sun position (e.g., 52.2297 for Warsaw) |
+| `longitude` | `number` | - | Longitude for realistic sun position (e.g., 21.0122 for Warsaw) |
+| `date` | `Date` | today | Date for sun position calculation |
 | `sidebarWidth` | `number \| string` | `280` | Width of the polygon list sidebar |
 | `sidebarPosition` | `'left' \| 'right'` | `'right'` | Position of the sidebar |
 | `hideSidebar` | `boolean` | `false` | Hide the sidebar completely |
@@ -127,6 +130,9 @@ All-in-one component that combines `Canvas3D` and `PolygonList` with built-in st
 | `shadows` | `boolean` | `true` | Enable shadow casting for bodies |
 | `timeOfDay` | `number` | `10` | Time of day (0-24), affects sun position and shadows |
 | `showTimeControl` | `boolean` | `false` | Show time of day slider control |
+| `latitude` | `number` | - | Latitude for realistic sun position (e.g., 52.2297 for Warsaw) |
+| `longitude` | `number` | - | Longitude for realistic sun position (e.g., 21.0122 for Warsaw) |
+| `date` | `Date` | today | Date for sun position calculation |
 | `outlineColor` | `string` | auto | Override polygon outline color (auto-cycles through preset colors) |
 | `polygons` | `Polygon[]` | - | Controlled polygons array |
 | `bodies` | `Body[]` | - | Controlled 3D bodies array |

@@ -21,6 +21,12 @@ export interface PVRoofModelerProps {
   timeOfDay?: number
   /** Show time of day slider control (default: true) */
   showTimeControl?: boolean
+  /** Latitude for realistic sun position (e.g., 52.2297 for Warsaw) */
+  latitude?: number
+  /** Longitude for realistic sun position (e.g., 21.0122 for Warsaw) */
+  longitude?: number
+  /** Date for sun position calculation (default: current date) */
+  date?: Date
   /** Width of the polygon list sidebar (default: 280) */
   sidebarWidth?: number | string
   /** Position of the sidebar (default: 'right') */
@@ -52,6 +58,9 @@ export function PVRoofModeler({
   shadows = true,
   timeOfDay,
   showTimeControl = true,
+  latitude,
+  longitude,
+  date,
   sidebarWidth = 280,
   sidebarPosition = 'right',
   hideSidebar = false,
@@ -197,6 +206,9 @@ export function PVRoofModeler({
           shadows={shadows}
           timeOfDay={timeOfDay}
           showTimeControl={showTimeControl}
+          latitude={latitude}
+          longitude={longitude}
+          date={date}
           polygons={polygons}
           bodies={bodies}
           onPolygonsChange={handlePolygonsChange}

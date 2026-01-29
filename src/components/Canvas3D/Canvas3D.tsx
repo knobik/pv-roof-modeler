@@ -2,6 +2,7 @@ import { useRef, useState, useCallback, useMemo, useEffect } from 'react'
 import { Canvas, useThree, ThreeEvent } from '@react-three/fiber'
 import { OrbitControls, Line } from '@react-three/drei'
 import * as THREE from 'three'
+import SunCalc from 'suncalc'
 import './Canvas3D.css'
 
 export interface Polygon {
@@ -34,6 +35,12 @@ export interface Canvas3DProps {
   timeOfDay?: number
   /** Show time of day slider control (default: false) */
   showTimeControl?: boolean
+  /** Latitude for realistic sun position calculation (e.g., 52.2297 for Warsaw) */
+  latitude?: number
+  /** Longitude for realistic sun position calculation (e.g., 21.0122 for Warsaw) */
+  longitude?: number
+  /** Date for sun position calculation (default: current date) */
+  date?: Date
   onImageLoad?: (file: File) => void
   onPolygonsChange?: (polygons: Polygon[]) => void
   onBodiesChange?: (bodies: Body[]) => void
@@ -44,9 +51,9 @@ const OUTLINE_HEIGHT = 0.01
 const POINT_SIZE = 0.05
 const POINT_SIZE_HOVER = 0.07
 
-// Calculate sun position based on time of day (0-24)
+// Simple sun position calculation (fallback when no coordinates provided)
 // Coordinate system: -Z is north, +X is east, +Z is south, -X is west
-function getSunPosition(timeOfDay: number): [number, number, number] {
+function getSimpleSunPosition(timeOfDay: number): [number, number, number] {
   // Normalize time to 0-24 range
   const time = ((timeOfDay % 24) + 24) % 24
 
@@ -59,47 +66,104 @@ function getSunPosition(timeOfDay: number): [number, number, number] {
   const height = Math.sin(angle) * 10 + 0.5
 
   // Sun moves from east (+X) to west (-X)
-  // At 6am (angle=0): cos(0)=1 → x=+8 (east)
-  // At 12pm (angle=PI/2): cos(PI/2)=0 → x=0 (south)
-  // At 6pm (angle=PI): cos(PI)=-1 → x=-8 (west)
   const x = Math.cos(angle) * 8
 
   // Sun is to the south (+Z) at noon (northern hemisphere)
-  // Higher Z at noon, lower at sunrise/sunset
   const z = Math.sin(angle) * 5
 
   return [x, Math.max(0.5, height), z]
 }
 
+// Realistic sun position using suncalc library
+// Coordinate system: -Z is north, +X is east, +Z is south, -X is west
+function getRealisticSunPosition(
+  timeOfDay: number,
+  latitude: number,
+  longitude: number,
+  date: Date
+): [number, number, number] {
+  // Create date with the specified time
+  const dateWithTime = new Date(date)
+  dateWithTime.setHours(Math.floor(timeOfDay), (timeOfDay % 1) * 60, 0, 0)
+
+  // Get sun position from suncalc
+  const sunPos = SunCalc.getPosition(dateWithTime, latitude, longitude)
+
+  // sunPos.azimuth: sun direction in radians (0 = south, positive = west)
+  // sunPos.altitude: sun height in radians (0 = horizon, PI/2 = zenith)
+
+  // Convert to our coordinate system
+  // azimuth 0 = south (+Z), azimuth PI/2 = west (-X), azimuth -PI/2 = east (+X)
+  const distance = 10
+  const elevation = Math.max(0, sunPos.altitude)
+
+  // Convert spherical to cartesian
+  // In suncalc: azimuth 0 is south, positive is clockwise (towards west)
+  // In our system: +Z is south, -X is west, +X is east
+  const x = -Math.sin(sunPos.azimuth) * Math.cos(elevation) * distance
+  const z = Math.cos(sunPos.azimuth) * Math.cos(elevation) * distance
+  const y = Math.sin(elevation) * distance
+
+  return [x, Math.max(0.5, y), z]
+}
+
 interface SunLightProps {
   timeOfDay: number
   shadows: boolean
+  latitude?: number
+  longitude?: number
+  date?: Date
 }
 
-function SunLight({ timeOfDay, shadows }: SunLightProps) {
+function SunLight({ timeOfDay, shadows, latitude, longitude, date }: SunLightProps) {
   const lightRef = useRef<THREE.DirectionalLight>(null)
-  const position = useMemo(() => getSunPosition(timeOfDay), [timeOfDay])
+
+  const position = useMemo(() => {
+    if (latitude !== undefined && longitude !== undefined) {
+      return getRealisticSunPosition(timeOfDay, latitude, longitude, date || new Date())
+    }
+    return getSimpleSunPosition(timeOfDay)
+  }, [timeOfDay, latitude, longitude, date])
+
+  // Get sunrise/sunset times for realistic mode
+  const sunTimes = useMemo(() => {
+    if (latitude !== undefined && longitude !== undefined) {
+      const times = SunCalc.getTimes(date || new Date(), latitude, longitude)
+      return {
+        sunrise: times.sunrise.getHours() + times.sunrise.getMinutes() / 60,
+        sunset: times.sunset.getHours() + times.sunset.getMinutes() / 60,
+        solarNoon: times.solarNoon.getHours() + times.solarNoon.getMinutes() / 60,
+      }
+    }
+    return { sunrise: 6, sunset: 18, solarNoon: 12 }
+  }, [latitude, longitude, date])
 
   // Calculate intensity based on time (dimmer at dawn/dusk)
   const intensity = useMemo(() => {
     const time = ((timeOfDay % 24) + 24) % 24
-    if (time < 6 || time > 18) return 0.1 // Night
-    const dayProgress = (time - 6) / 12
+    const { sunrise, sunset } = sunTimes
+
+    if (time < sunrise || time > sunset) return 0.1 // Night
+    const dayLength = sunset - sunrise
+    const dayProgress = (time - sunrise) / dayLength
     return 0.3 + Math.sin(dayProgress * Math.PI) * 0.7
-  }, [timeOfDay])
+  }, [timeOfDay, sunTimes])
 
   // Warmer color at dawn/dusk
   const color = useMemo(() => {
     const time = ((timeOfDay % 24) + 24) % 24
-    if (time < 6 || time > 18) return '#4a5568' // Night - bluish
-    const dayProgress = (time - 6) / 12
+    const { sunrise, sunset } = sunTimes
+
+    if (time < sunrise || time > sunset) return '#4a5568' // Night - bluish
+    const dayLength = sunset - sunrise
+    const dayProgress = (time - sunrise) / dayLength
     const warmth = 1 - Math.sin(dayProgress * Math.PI)
     // Interpolate from warm orange to white and back
     const r = 255
     const g = Math.round(255 - warmth * 80)
     const b = Math.round(255 - warmth * 120)
     return `rgb(${r},${g},${b})`
-  }, [timeOfDay])
+  }, [timeOfDay, sunTimes])
 
   return (
     <directionalLight
@@ -750,6 +814,9 @@ interface SceneProps {
   backgroundColor: string
   shadows: boolean
   timeOfDay: number
+  latitude?: number
+  longitude?: number
+  date?: Date
   isAddingPolygon: boolean
   isAddingLine: boolean
   isAddingBody: boolean
@@ -781,6 +848,9 @@ function Scene({
   backgroundColor,
   shadows,
   timeOfDay,
+  latitude,
+  longitude,
+  date,
   isAddingPolygon,
   isAddingLine,
   isAddingBody,
@@ -816,7 +886,7 @@ function Scene({
     <>
       <color attach="background" args={[backgroundColor]} />
       <ambientLight intensity={ambientIntensity} />
-      <SunLight timeOfDay={timeOfDay} shadows={shadows} />
+      <SunLight timeOfDay={timeOfDay} shadows={shadows} latitude={latitude} longitude={longitude} date={date} />
       <Compass onRotationChange={onCompassRotationChange} />
 
       {showGrid && <GridHelper size={gridSize} />}
@@ -926,6 +996,9 @@ export function Canvas3D({
   shadows = true,
   timeOfDay: controlledTimeOfDay,
   showTimeControl = false,
+  latitude,
+  longitude,
+  date,
   polygons: controlledPolygons,
   bodies: controlledBodies,
   onImageLoad,
@@ -1307,6 +1380,9 @@ export function Canvas3D({
           backgroundColor={backgroundColor}
           shadows={shadows}
           timeOfDay={timeOfDay}
+          latitude={latitude}
+          longitude={longitude}
+          date={date}
           isAddingPolygon={isAddingPolygon}
           isAddingLine={isAddingLine}
           isAddingBody={isAddingBody}
