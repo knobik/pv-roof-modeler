@@ -15,6 +15,12 @@ export interface PVRoofModelerProps {
   gridSize?: number
   /** Show grid helper (default: true) */
   showGrid?: boolean
+  /** Enable shadow casting for bodies (default: true) */
+  shadows?: boolean
+  /** Time of day in hours (0-24), affects sun position and shadows (default: 10) */
+  timeOfDay?: number
+  /** Show time of day slider control (default: true) */
+  showTimeControl?: boolean
   /** Width of the polygon list sidebar (default: 280) */
   sidebarWidth?: number | string
   /** Position of the sidebar (default: 'right') */
@@ -33,6 +39,8 @@ export interface PVRoofModelerProps {
   onImageLoad?: (file: File) => void
   /** Callback when selection changes */
   onSelectionChange?: (polygonId: string | null) => void
+  /** Callback when time of day changes */
+  onTimeOfDayChange?: (time: number) => void
 }
 
 export function PVRoofModeler({
@@ -41,6 +49,9 @@ export function PVRoofModeler({
   backgroundColor = '#1a1a2e',
   gridSize = 10,
   showGrid = true,
+  shadows = true,
+  timeOfDay,
+  showTimeControl = true,
   sidebarWidth = 280,
   sidebarPosition = 'right',
   hideSidebar = false,
@@ -50,6 +61,7 @@ export function PVRoofModeler({
   onBodiesChange,
   onImageLoad,
   onSelectionChange,
+  onTimeOfDayChange,
 }: PVRoofModelerProps) {
   // Internal state for uncontrolled mode
   const [internalPolygons, setInternalPolygons] = useState<Polygon[]>([])
@@ -182,9 +194,13 @@ export function PVRoofModeler({
           backgroundColor={backgroundColor}
           gridSize={gridSize}
           showGrid={showGrid}
+          shadows={shadows}
+          timeOfDay={timeOfDay}
+          showTimeControl={showTimeControl}
           polygons={polygons}
           bodies={bodies}
           onPolygonsChange={handlePolygonsChange}
+          onTimeOfDayChange={onTimeOfDayChange}
           onBodiesChange={handleBodiesChange}
           onImageLoad={onImageLoad}
         />

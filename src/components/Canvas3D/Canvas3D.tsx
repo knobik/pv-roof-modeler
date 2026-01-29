@@ -28,14 +28,97 @@ export interface Canvas3DProps {
   outlineColor?: string
   polygons?: Polygon[]
   bodies?: Body[]
+  /** Enable shadow casting for bodies (default: true) */
+  shadows?: boolean
+  /** Time of day in hours (0-24), affects sun position and shadows (default: 10) */
+  timeOfDay?: number
+  /** Show time of day slider control (default: false) */
+  showTimeControl?: boolean
   onImageLoad?: (file: File) => void
   onPolygonsChange?: (polygons: Polygon[]) => void
   onBodiesChange?: (bodies: Body[]) => void
+  onTimeOfDayChange?: (time: number) => void
 }
 
 const OUTLINE_HEIGHT = 0.01
 const POINT_SIZE = 0.05
 const POINT_SIZE_HOVER = 0.07
+
+// Calculate sun position based on time of day (0-24)
+// Coordinate system: -Z is north, +X is east, +Z is south, -X is west
+function getSunPosition(timeOfDay: number): [number, number, number] {
+  // Normalize time to 0-24 range
+  const time = ((timeOfDay % 24) + 24) % 24
+
+  // Sun arc: rises at 6, peaks at 12, sets at 18
+  // Map 6-18 to 0-PI for the arc
+  const dayProgress = Math.max(0, Math.min(1, (time - 6) / 12))
+  const angle = dayProgress * Math.PI
+
+  // Sun height (Y) follows a sine curve, max at noon
+  const height = Math.sin(angle) * 10 + 0.5
+
+  // Sun moves from east (+X) to west (-X)
+  // At 6am (angle=0): cos(0)=1 → x=+8 (east)
+  // At 12pm (angle=PI/2): cos(PI/2)=0 → x=0 (south)
+  // At 6pm (angle=PI): cos(PI)=-1 → x=-8 (west)
+  const x = Math.cos(angle) * 8
+
+  // Sun is to the south (+Z) at noon (northern hemisphere)
+  // Higher Z at noon, lower at sunrise/sunset
+  const z = Math.sin(angle) * 5
+
+  return [x, Math.max(0.5, height), z]
+}
+
+interface SunLightProps {
+  timeOfDay: number
+  shadows: boolean
+}
+
+function SunLight({ timeOfDay, shadows }: SunLightProps) {
+  const lightRef = useRef<THREE.DirectionalLight>(null)
+  const position = useMemo(() => getSunPosition(timeOfDay), [timeOfDay])
+
+  // Calculate intensity based on time (dimmer at dawn/dusk)
+  const intensity = useMemo(() => {
+    const time = ((timeOfDay % 24) + 24) % 24
+    if (time < 6 || time > 18) return 0.1 // Night
+    const dayProgress = (time - 6) / 12
+    return 0.3 + Math.sin(dayProgress * Math.PI) * 0.7
+  }, [timeOfDay])
+
+  // Warmer color at dawn/dusk
+  const color = useMemo(() => {
+    const time = ((timeOfDay % 24) + 24) % 24
+    if (time < 6 || time > 18) return '#4a5568' // Night - bluish
+    const dayProgress = (time - 6) / 12
+    const warmth = 1 - Math.sin(dayProgress * Math.PI)
+    // Interpolate from warm orange to white and back
+    const r = 255
+    const g = Math.round(255 - warmth * 80)
+    const b = Math.round(255 - warmth * 120)
+    return `rgb(${r},${g},${b})`
+  }, [timeOfDay])
+
+  return (
+    <directionalLight
+      ref={lightRef}
+      position={position}
+      intensity={intensity}
+      color={color}
+      castShadow={shadows}
+      shadow-mapSize-width={2048}
+      shadow-mapSize-height={2048}
+      shadow-camera-far={50}
+      shadow-camera-left={-10}
+      shadow-camera-right={10}
+      shadow-camera-top={10}
+      shadow-camera-bottom={-10}
+      shadow-bias={-0.0001}
+    />
+  )
+}
 
 interface DraggablePointProps {
   position: THREE.Vector3
@@ -214,10 +297,11 @@ interface ImagePlaneProps {
   textureUrl: string | null
   aspectRatio: number
   isAddingPolygon: boolean
+  receiveShadow: boolean
   onPlaneClick: (point: THREE.Vector3) => void
 }
 
-function ImagePlane({ textureUrl, aspectRatio, isAddingPolygon, onPlaneClick }: ImagePlaneProps) {
+function ImagePlane({ textureUrl, aspectRatio, isAddingPolygon, receiveShadow, onPlaneClick }: ImagePlaneProps) {
   const meshRef = useRef<THREE.Mesh>(null)
   const texture = useMemo(
     () => (textureUrl ? new THREE.TextureLoader().load(textureUrl) : null),
@@ -246,9 +330,14 @@ function ImagePlane({ textureUrl, aspectRatio, isAddingPolygon, onPlaneClick }: 
       rotation={[-Math.PI / 2, 0, 0]}
       position={[0, 0, 0]}
       onClick={handleClick}
+      receiveShadow={receiveShadow}
     >
       <planeGeometry args={[planeWidth, planeHeight]} />
-      <meshBasicMaterial map={texture} side={THREE.DoubleSide} />
+      {receiveShadow ? (
+        <meshStandardMaterial map={texture} side={THREE.DoubleSide} />
+      ) : (
+        <meshBasicMaterial map={texture} side={THREE.DoubleSide} />
+      )}
     </mesh>
   )
 }
@@ -341,12 +430,13 @@ interface BuildingBodyProps {
   isAddingBody: boolean
   imageUrl: string | null
   aspectRatio: number
+  castShadow: boolean
   onDelete: () => void
 }
 
 const PLANE_WIDTH = 5
 
-function BuildingBody({ body, isAddingBody, imageUrl, aspectRatio, onDelete }: BuildingBodyProps) {
+function BuildingBody({ body, isAddingBody, imageUrl, aspectRatio, castShadow, onDelete }: BuildingBodyProps) {
   const [isHovered, setIsHovered] = useState(false)
 
   // Load the image texture
@@ -432,6 +522,8 @@ function BuildingBody({ body, isAddingBody, imageUrl, aspectRatio, onDelete }: B
         geometry={wallsGeometry}
         rotation={[-Math.PI / 2, 0, 0]}
         position={[0, 0, 0]}
+        castShadow={castShadow}
+        receiveShadow={castShadow}
       >
         <meshStandardMaterial
           color={isHovered && isAddingBody ? '#ff6666' : body.color}
@@ -443,6 +535,7 @@ function BuildingBody({ body, isAddingBody, imageUrl, aspectRatio, onDelete }: B
         geometry={topGeometry}
         rotation={[-Math.PI / 2, 0, 0]}
         position={[0, body.height + 0.001, 0]}
+        castShadow={castShadow}
       >
         {texture ? (
           <meshBasicMaterial map={texture} side={THREE.DoubleSide} />
@@ -459,10 +552,11 @@ interface BuildingBodiesProps {
   isAddingBody: boolean
   imageUrl: string | null
   aspectRatio: number
+  castShadow: boolean
   onDeleteBody: (bodyId: string) => void
 }
 
-function BuildingBodies({ bodies, isAddingBody, imageUrl, aspectRatio, onDeleteBody }: BuildingBodiesProps) {
+function BuildingBodies({ bodies, isAddingBody, imageUrl, aspectRatio, castShadow, onDeleteBody }: BuildingBodiesProps) {
   return (
     <>
       {bodies.map((body) => (
@@ -472,6 +566,7 @@ function BuildingBodies({ bodies, isAddingBody, imageUrl, aspectRatio, onDeleteB
           isAddingBody={isAddingBody}
           imageUrl={imageUrl}
           aspectRatio={aspectRatio}
+          castShadow={castShadow}
           onDelete={() => onDeleteBody(body.id)}
         />
       ))}
@@ -653,6 +748,8 @@ interface SceneProps {
   showGrid: boolean
   gridSize: number
   backgroundColor: string
+  shadows: boolean
+  timeOfDay: number
   isAddingPolygon: boolean
   isAddingLine: boolean
   isAddingBody: boolean
@@ -682,6 +779,8 @@ function Scene({
   showGrid,
   gridSize,
   backgroundColor,
+  shadows,
+  timeOfDay,
   isAddingPolygon,
   isAddingLine,
   isAddingBody,
@@ -706,11 +805,18 @@ function Scene({
 }: SceneProps) {
   const orbitEnabled = !isAddingPolygon && !isAddingLine && !isAddingBody && !isDraggingPoint
 
+  // Ambient light intensity adjusts based on time of day
+  const ambientIntensity = useMemo(() => {
+    const time = ((timeOfDay % 24) + 24) % 24
+    if (time < 6 || time > 18) return 0.3 // Night
+    return 0.4 + Math.sin(((time - 6) / 12) * Math.PI) * 0.3
+  }, [timeOfDay])
+
   return (
     <>
       <color attach="background" args={[backgroundColor]} />
-      <ambientLight intensity={0.8} />
-      <directionalLight position={[10, 10, 5]} intensity={0.5} />
+      <ambientLight intensity={ambientIntensity} />
+      <SunLight timeOfDay={timeOfDay} shadows={shadows} />
       <Compass onRotationChange={onCompassRotationChange} />
 
       {showGrid && <GridHelper size={gridSize} />}
@@ -718,6 +824,7 @@ function Scene({
         textureUrl={imageUrl}
         aspectRatio={aspectRatio}
         isAddingPolygon={isAddingPolygon}
+        receiveShadow={shadows}
         onPlaneClick={onPlaneClick}
       />
       <BuildingBodies
@@ -725,6 +832,7 @@ function Scene({
         isAddingBody={isAddingBody}
         imageUrl={imageUrl}
         aspectRatio={aspectRatio}
+        castShadow={shadows}
         onDeleteBody={onDeleteBody}
       />
       <PolygonOutlines
@@ -792,6 +900,20 @@ const IconBody = () => (
   </svg>
 )
 
+const IconSun = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <circle cx="12" cy="12" r="5" />
+    <line x1="12" y1="1" x2="12" y2="3" />
+    <line x1="12" y1="21" x2="12" y2="23" />
+    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+    <line x1="1" y1="12" x2="3" y2="12" />
+    <line x1="21" y1="12" x2="23" y2="12" />
+    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+  </svg>
+)
+
 type Tool = 'select' | 'polygon' | 'line' | 'body'
 
 export function Canvas3D({
@@ -801,11 +923,15 @@ export function Canvas3D({
   gridSize = 10,
   showGrid = true,
   outlineColor,
+  shadows = true,
+  timeOfDay: controlledTimeOfDay,
+  showTimeControl = false,
   polygons: controlledPolygons,
   bodies: controlledBodies,
   onImageLoad,
   onPolygonsChange,
   onBodiesChange,
+  onTimeOfDayChange,
 }: Canvas3DProps) {
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [aspectRatio, setAspectRatio] = useState(1)
@@ -820,8 +946,19 @@ export function Canvas3D({
   const [currentPoints, setCurrentPoints] = useState<THREE.Vector3[]>([])
   const [isDraggingPoint, setIsDraggingPoint] = useState(false)
   const [compassRotation, setCompassRotation] = useState(0)
+  const [internalTimeOfDay, setInternalTimeOfDay] = useState(10)
   const inputRef = useRef<HTMLInputElement>(null)
   const orbitControlsRef = useRef<React.ComponentRef<typeof OrbitControls> | null>(null)
+
+  // Time of day can be controlled or uncontrolled
+  const timeOfDay = controlledTimeOfDay !== undefined ? controlledTimeOfDay : internalTimeOfDay
+
+  const handleTimeOfDayChange = useCallback((newTime: number) => {
+    if (controlledTimeOfDay === undefined) {
+      setInternalTimeOfDay(newTime)
+    }
+    onTimeOfDayChange?.(newTime)
+  }, [controlledTimeOfDay, onTimeOfDayChange])
 
   // Support both controlled and uncontrolled modes
   const isControlled = controlledPolygons !== undefined
@@ -1161,13 +1298,15 @@ export function Canvas3D({
         </div>
       )}
 
-      <Canvas camera={{ position: [5, 5, 5], fov: 50 }}>
+      <Canvas camera={{ position: [5, 5, 5], fov: 50 }} shadows={shadows}>
         <Scene
           imageUrl={imageUrl}
           aspectRatio={aspectRatio}
           showGrid={showGrid}
           gridSize={gridSize}
           backgroundColor={backgroundColor}
+          shadows={shadows}
+          timeOfDay={timeOfDay}
           isAddingPolygon={isAddingPolygon}
           isAddingLine={isAddingLine}
           isAddingBody={isAddingBody}
@@ -1204,6 +1343,27 @@ export function Canvas3D({
             <div className="canvas3d-compass-w">W</div>
             <div className="canvas3d-compass-needle" />
           </div>
+        </div>
+      )}
+
+      {imageUrl && showTimeControl && (
+        <div className="canvas3d-time-control">
+          <div className="canvas3d-time-icon">
+            <IconSun />
+          </div>
+          <input
+            type="range"
+            className="canvas3d-time-slider"
+            min="0"
+            max="24"
+            step="0.5"
+            value={timeOfDay}
+            onChange={(e) => handleTimeOfDayChange(parseFloat(e.target.value))}
+            title={`Time: ${Math.floor(timeOfDay)}:${String(Math.round((timeOfDay % 1) * 60)).padStart(2, '0')}`}
+          />
+          <span className="canvas3d-time-label">
+            {Math.floor(timeOfDay)}:{String(Math.round((timeOfDay % 1) * 60)).padStart(2, '0')}
+          </span>
         </div>
       )}
 

@@ -11,6 +11,8 @@ A React component library for annotating aerial images with polygon outlines in 
 - **Point Editing** - Drag points to adjust polygons, add points on edges, remove points with right-click
 - **Internal Lines** - Add lines between polygon points to define faces
 - **3D Bodies** - Extract polygons into 3D extruded building shapes with adjustable height
+- **Shadows** - Realistic shadow casting with adjustable time of day
+- **Sun Simulation** - Dynamic sun position and lighting based on time of day (6am-6pm)
 - **Polygon Management** - Hierarchical list component for managing polygons and their associated bodies
 - **Compass** - Visual compass indicator showing current camera orientation
 
@@ -97,6 +99,9 @@ All-in-one component that combines `Canvas3D` and `PolygonList` with built-in st
 | `backgroundColor` | `string` | `'#1a1a2e'` | Canvas background color |
 | `gridSize` | `number` | `10` | Size of the grid helper |
 | `showGrid` | `boolean` | `true` | Show grid helper |
+| `shadows` | `boolean` | `true` | Enable shadow casting for bodies |
+| `timeOfDay` | `number` | `10` | Time of day (0-24), affects sun position and shadows |
+| `showTimeControl` | `boolean` | `true` | Show time of day slider control |
 | `sidebarWidth` | `number \| string` | `280` | Width of the polygon list sidebar |
 | `sidebarPosition` | `'left' \| 'right'` | `'right'` | Position of the sidebar |
 | `hideSidebar` | `boolean` | `false` | Hide the sidebar completely |
@@ -106,6 +111,7 @@ All-in-one component that combines `Canvas3D` and `PolygonList` with built-in st
 | `onBodiesChange` | `(bodies: Body[]) => void` | - | Callback when bodies change |
 | `onImageLoad` | `(file: File) => void` | - | Callback when image is loaded |
 | `onSelectionChange` | `(polygonId: string \| null) => void` | - | Callback when selection changes |
+| `onTimeOfDayChange` | `(time: number) => void` | - | Callback when time of day changes |
 
 ### Canvas3D
 
@@ -118,12 +124,16 @@ All-in-one component that combines `Canvas3D` and `PolygonList` with built-in st
 | `backgroundColor` | `string` | `'#1a1a2e'` | Background color |
 | `gridSize` | `number` | `10` | Size of the grid helper |
 | `showGrid` | `boolean` | `true` | Show grid helper |
+| `shadows` | `boolean` | `true` | Enable shadow casting for bodies |
+| `timeOfDay` | `number` | `10` | Time of day (0-24), affects sun position and shadows |
+| `showTimeControl` | `boolean` | `false` | Show time of day slider control |
 | `outlineColor` | `string` | auto | Override polygon outline color (auto-cycles through preset colors) |
 | `polygons` | `Polygon[]` | - | Controlled polygons array |
 | `bodies` | `Body[]` | - | Controlled 3D bodies array |
 | `onPolygonsChange` | `(polygons: Polygon[]) => void` | - | Callback when polygons change |
 | `onBodiesChange` | `(bodies: Body[]) => void` | - | Callback when bodies change |
 | `onImageLoad` | `(file: File) => void` | - | Callback when image is loaded |
+| `onTimeOfDayChange` | `(time: number) => void` | - | Callback when time of day changes |
 
 **Tools:**
 - **Select (V)** - Default mode for orbit controls and point dragging

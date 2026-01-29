@@ -262,3 +262,80 @@
   background: rgba(255, 255, 255, 0.5);
   clip-path: polygon(50% 100%, 100% 0%, 0% 0%);
 }
+
+/* Time of Day Control */
+.canvas3d-time-control {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(30, 30, 30, 0.95);
+  border-radius: 6px;
+  padding: 8px 12px;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.canvas3d-time-icon {
+  width: 20px;
+  height: 20px;
+  color: #fbbf24;
+  flex-shrink: 0;
+}
+
+.canvas3d-time-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.canvas3d-time-slider {
+  width: 120px;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: linear-gradient(to right,
+    #1e3a5f 0%,
+    #f97316 25%,
+    #fbbf24 50%,
+    #f97316 75%,
+    #1e3a5f 100%
+  );
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.canvas3d-time-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  background: white;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  transition: transform 0.1s;
+}
+
+.canvas3d-time-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+}
+
+.canvas3d-time-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.canvas3d-time-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.9);
+  font-family: monospace;
+  min-width: 40px;
+}
