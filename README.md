@@ -17,15 +17,36 @@ A React component library for annotating aerial images with polygon outlines in 
 ## Installation
 
 ```bash
-npm install my-react-components
+npm install pv-roof-modeler
 ```
 
-## Usage
+## Quick Start
+
+The simplest way to get started is with the `PVRoofModeler` component, which combines the canvas and sidebar with built-in state management:
+
+```tsx
+import { PVRoofModeler } from 'pv-roof-modeler'
+import 'pv-roof-modeler/styles.css'
+
+function App() {
+  return (
+    <PVRoofModeler
+      height={600}
+      onPolygonsChange={(polygons) => console.log('Polygons:', polygons)}
+      onBodiesChange={(bodies) => console.log('Bodies:', bodies)}
+    />
+  )
+}
+```
+
+## Advanced Usage
+
+For full control over state and layout, use `Canvas3D` and `PolygonList` separately:
 
 ```tsx
 import { useState } from 'react'
-import { Canvas3D, PolygonList, Polygon, Body } from 'my-react-components'
-import 'my-react-components/styles.css'
+import { Canvas3D, PolygonList, Polygon, Body } from 'pv-roof-modeler'
+import 'pv-roof-modeler/styles.css'
 
 function App() {
   const [polygons, setPolygons] = useState<Polygon[]>([])
@@ -64,6 +85,27 @@ function App() {
 ```
 
 ## Components
+
+### PVRoofModeler
+
+All-in-one component that combines `Canvas3D` and `PolygonList` with built-in state management. This is the recommended way to use the library for most use cases.
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `width` | `number \| string` | `'100%'` | Editor width |
+| `height` | `number \| string` | `500` | Editor height |
+| `backgroundColor` | `string` | `'#1a1a2e'` | Canvas background color |
+| `gridSize` | `number` | `10` | Size of the grid helper |
+| `showGrid` | `boolean` | `true` | Show grid helper |
+| `sidebarWidth` | `number \| string` | `280` | Width of the polygon list sidebar |
+| `sidebarPosition` | `'left' \| 'right'` | `'right'` | Position of the sidebar |
+| `hideSidebar` | `boolean` | `false` | Hide the sidebar completely |
+| `polygons` | `Polygon[]` | - | Controlled polygons array (optional) |
+| `bodies` | `Body[]` | - | Controlled bodies array (optional) |
+| `onPolygonsChange` | `(polygons: Polygon[]) => void` | - | Callback when polygons change |
+| `onBodiesChange` | `(bodies: Body[]) => void` | - | Callback when bodies change |
+| `onImageLoad` | `(file: File) => void` | - | Callback when image is loaded |
+| `onSelectionChange` | `(polygonId: string \| null) => void` | - | Callback when selection changes |
 
 ### Canvas3D
 

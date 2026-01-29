@@ -15,8 +15,8 @@ export default defineConfig({
   build: {
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
-      name: 'MyReactComponents',
-      fileName: 'my-react-components',
+      name: 'PVRoofModeler',
+      fileName: 'pv-roof-modeler',
     },
     rollupOptions: {
       external: ['react', 'react-dom', 'react/jsx-runtime'],

@@ -1,0 +1,26 @@
+.pv-roof-modeler {
+  display: flex;
+  gap: 0;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #1a1a2e;
+}
+
+.pv-roof-modeler-canvas {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+}
+
+.pv-roof-modeler-sidebar {
+  flex-shrink: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #16213e;
+  border-left: 1px solid #0f3460;
+}
+
+.pv-roof-modeler-sidebar:first-child {
+  border-left: none;
+  border-right: 1px solid #0f3460;
+}

@@ -784,13 +784,6 @@ const IconTrash = () => (
   </svg>
 )
 
-const IconUndo = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M3 7v6h6" />
-    <path d="M3 13a9 9 0 1018 0 9 9 0 00-15-6.7L3 7" />
-  </svg>
-)
-
 const IconBody = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <path d="M12 2L2 7v10l10 5 10-5V7L12 2z" />
@@ -968,20 +961,6 @@ export function Canvas3D({
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
     if (imageUrl) {
       e.preventDefault()
-    }
-  }, [imageUrl])
-
-  const handleClear = useCallback(() => {
-    if (imageUrl) {
-      URL.revokeObjectURL(imageUrl)
-    }
-    setImageUrl(null)
-    setPolygons([])
-    setCurrentPoints([])
-    setActiveTool('select')
-    setSelectedLinePoints(null)
-    if (inputRef.current) {
-      inputRef.current.value = ''
     }
   }, [imageUrl])
 

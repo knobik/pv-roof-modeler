@@ -1,16 +1,16 @@
 {
-  "name": "my-react-components",
+  "name": "pv-roof-modeler",
   "version": "1.0.0",
-  "description": "A reusable React component library",
+  "description": "React component library for annotating aerial images with polygon outlines in a 3D canvas",
   "type": "module",
-  "main": "./dist/my-react-components.umd.cjs",
-  "module": "./dist/my-react-components.js",
+  "main": "./dist/pv-roof-modeler.umd.cjs",
+  "module": "./dist/pv-roof-modeler.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/my-react-components.js",
-      "require": "./dist/my-react-components.umd.cjs"
+      "import": "./dist/pv-roof-modeler.js",
+      "require": "./dist/pv-roof-modeler.umd.cjs"
     },
     "./styles.css": "./dist/style.css"
   },
@@ -41,8 +41,14 @@
   },
   "keywords": [
     "react",
-    "components",
-    "library"
+    "threejs",
+    "3d",
+    "polygon",
+    "annotation",
+    "roof",
+    "solar",
+    "pv",
+    "aerial-imagery"
   ],
   "author": "",
   "license": "MIT",
