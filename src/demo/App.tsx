@@ -28,6 +28,22 @@ export function App() {
     )
   }, [])
 
+  const handleDeleteBody = useCallback((bodyId: string) => {
+    setBodies((prev) => prev.filter((b) => b.id !== bodyId))
+  }, [])
+
+  const handleBodyColorChange = useCallback((bodyId: string, color: string) => {
+    setBodies((prev) =>
+      prev.map((b) => (b.id === bodyId ? { ...b, color } : b))
+    )
+  }, [])
+
+  const handleBodyHeightChange = useCallback((bodyId: string, height: number) => {
+    setBodies((prev) =>
+      prev.map((b) => (b.id === bodyId ? { ...b, height } : b))
+    )
+  }, [])
+
   return (
     <div className="playground">
       <h1>Component Playground</h1>
@@ -51,10 +67,14 @@ export function App() {
           <div style={{ width: '320px', flexShrink: 0 }}>
             <PolygonList
               polygons={polygons}
+              bodies={bodies}
               selectedPolygonId={selectedPolygonId}
               onSelectPolygon={setSelectedPolygonId}
               onDeletePolygon={handleDeletePolygon}
               onPolygonColorChange={handlePolygonColorChange}
+              onDeleteBody={handleDeleteBody}
+              onBodyColorChange={handleBodyColorChange}
+              onBodyHeightChange={handleBodyHeightChange}
             />
           </div>
         </div>

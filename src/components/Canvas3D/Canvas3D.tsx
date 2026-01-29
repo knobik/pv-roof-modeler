@@ -609,6 +609,44 @@ function GridHelper({ size }: { size: number }) {
   return <gridHelper args={[size, size, '#888888', '#cccccc']} />
 }
 
+interface CompassProps {
+  onRotationChange: (angle: number) => void
+}
+
+function Compass({ onRotationChange }: CompassProps) {
+  const { camera } = useThree()
+
+  useEffect(() => {
+    const updateRotation = () => {
+      // Get the camera's azimuthal angle (rotation around Y axis)
+      // In our scene, -Z is north (top of image), so we calculate angle from -Z axis
+      const cameraDirection = new THREE.Vector3()
+      camera.getWorldDirection(cameraDirection)
+      // Project onto XZ plane
+      cameraDirection.y = 0
+      cameraDirection.normalize()
+      // Calculate angle from -Z axis (north)
+      const angle = Math.atan2(cameraDirection.x, -cameraDirection.z)
+      onRotationChange(-angle * (180 / Math.PI))
+    }
+
+    // Initial update
+    updateRotation()
+
+    // Subscribe to camera changes via animation frame
+    let animationId: number
+    const animate = () => {
+      updateRotation()
+      animationId = requestAnimationFrame(animate)
+    }
+    animationId = requestAnimationFrame(animate)
+
+    return () => cancelAnimationFrame(animationId)
+  }, [camera, onRotationChange])
+
+  return null
+}
+
 interface SceneProps {
   imageUrl: string | null
   aspectRatio: number
@@ -635,6 +673,7 @@ interface SceneProps {
   onDeleteBody: (bodyId: string) => void
   orbitControlsRef: React.RefObject<React.ComponentRef<typeof OrbitControls> | null>
   isDraggingPoint: boolean
+  onCompassRotationChange: (angle: number) => void
 }
 
 function Scene({
@@ -663,6 +702,7 @@ function Scene({
   onDeleteBody,
   orbitControlsRef,
   isDraggingPoint,
+  onCompassRotationChange,
 }: SceneProps) {
   const orbitEnabled = !isAddingPolygon && !isAddingLine && !isAddingBody && !isDraggingPoint
 
@@ -671,6 +711,7 @@ function Scene({
       <color attach="background" args={[backgroundColor]} />
       <ambientLight intensity={0.8} />
       <directionalLight position={[10, 10, 5]} intensity={0.5} />
+      <Compass onRotationChange={onCompassRotationChange} />
 
       {showGrid && <GridHelper size={gridSize} />}
       <ImagePlane
@@ -785,6 +826,7 @@ export function Canvas3D({
   const [internalBodies, setInternalBodies] = useState<Body[]>([])
   const [currentPoints, setCurrentPoints] = useState<THREE.Vector3[]>([])
   const [isDraggingPoint, setIsDraggingPoint] = useState(false)
+  const [compassRotation, setCompassRotation] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
   const orbitControlsRef = useRef<React.ComponentRef<typeof OrbitControls> | null>(null)
 
@@ -1121,8 +1163,24 @@ export function Canvas3D({
           onDeleteBody={handleDeleteBody}
           orbitControlsRef={orbitControlsRef}
           isDraggingPoint={isDraggingPoint}
+          onCompassRotationChange={setCompassRotation}
         />
       </Canvas>
+
+      {imageUrl && (
+        <div className="canvas3d-compass">
+          <div
+            className="canvas3d-compass-rose"
+            style={{ transform: `rotate(${compassRotation}deg)` }}
+          >
+            <div className="canvas3d-compass-n">N</div>
+            <div className="canvas3d-compass-e">E</div>
+            <div className="canvas3d-compass-s">S</div>
+            <div className="canvas3d-compass-w">W</div>
+            <div className="canvas3d-compass-needle" />
+          </div>
+        </div>
+      )}
 
       {imageUrl && (
         <div className="canvas3d-toolbox">

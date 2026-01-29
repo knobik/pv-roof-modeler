@@ -179,3 +179,86 @@
 .canvas3d-action-btn--danger:hover {
   background: rgba(239, 68, 68, 1);
 }
+
+/* Compass */
+.canvas3d-compass {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 60px;
+  height: 60px;
+  background: rgba(30, 30, 30, 0.95);
+  border-radius: 50%;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.canvas3d-compass-rose {
+  position: relative;
+  width: 50px;
+  height: 50px;
+  transition: transform 0.1s ease-out;
+}
+
+.canvas3d-compass-n,
+.canvas3d-compass-e,
+.canvas3d-compass-s,
+.canvas3d-compass-w {
+  position: absolute;
+  font-size: 11px;
+  font-weight: bold;
+  color: rgba(255, 255, 255, 0.7);
+  width: 14px;
+  text-align: center;
+}
+
+.canvas3d-compass-n {
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #ef4444;
+}
+
+.canvas3d-compass-s {
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.canvas3d-compass-e {
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.canvas3d-compass-w {
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.canvas3d-compass-needle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 20px;
+  transform: translate(-50%, -100%);
+  background: linear-gradient(to top, #ef4444 0%, #ef4444 100%);
+  clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+}
+
+.canvas3d-compass-needle::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 4px;
+  height: 12px;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.5);
+  clip-path: polygon(50% 100%, 100% 0%, 0% 0%);
+}
