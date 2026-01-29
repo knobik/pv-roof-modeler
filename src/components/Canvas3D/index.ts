@@ -1,0 +1,2 @@
+export { Canvas3D } from './Canvas3D'
+export type { Canvas3DProps, Polygon } from './Canvas3D'
