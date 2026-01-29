@@ -1,6 +1,8 @@
 # PV Project Library
 
-A React component library for annotating aerial images with polygon outlines in a 3D canvas. Built with React, TypeScript, and Three.js.
+A React component library for annotating aerial images with polygon outlines in a 3D canvas. Built with React 18/19, TypeScript, and Three.js via react-three-fiber.
+
+**[Live Demo](https://knobik.github.io/pv-roof-modeler/)**
 
 ## Features
 
@@ -8,8 +10,9 @@ A React component library for annotating aerial images with polygon outlines in 
 - **Polygon Drawing** - Draw polygon outlines to mark boundaries (e.g., house rooftops)
 - **Point Editing** - Drag points to adjust polygons, add points on edges, remove points with right-click
 - **Internal Lines** - Add lines between polygon points to define faces
-- **3D Bodies** - Extract polygons into 3D extruded building shapes
-- **Polygon Management** - Companion component for listing, selecting, and managing polygons
+- **3D Bodies** - Extract polygons into 3D extruded building shapes with adjustable height
+- **Polygon Management** - Hierarchical list component for managing polygons and their associated bodies
+- **Compass** - Visual compass indicator showing current camera orientation
 
 ## Installation
 
@@ -21,11 +24,12 @@ npm install my-react-components
 
 ```tsx
 import { useState } from 'react'
-import { Canvas3D, PolygonList, Polygon } from 'my-react-components'
+import { Canvas3D, PolygonList, Polygon, Body } from 'my-react-components'
 import 'my-react-components/styles.css'
 
 function App() {
   const [polygons, setPolygons] = useState<Polygon[]>([])
+  const [bodies, setBodies] = useState<Body[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
   return (
@@ -33,15 +37,25 @@ function App() {
       <Canvas3D
         height="600px"
         polygons={polygons}
+        bodies={bodies}
         onPolygonsChange={setPolygons}
+        onBodiesChange={setBodies}
       />
       <PolygonList
         polygons={polygons}
+        bodies={bodies}
         selectedPolygonId={selectedId}
         onSelectPolygon={setSelectedId}
         onDeletePolygon={(id) => setPolygons(p => p.filter(x => x.id !== id))}
         onPolygonColorChange={(id, color) =>
           setPolygons(p => p.map(x => x.id === id ? { ...x, color } : x))
+        }
+        onDeleteBody={(id) => setBodies(b => b.filter(x => x.id !== id))}
+        onBodyColorChange={(id, color) =>
+          setBodies(b => b.map(x => x.id === id ? { ...x, color } : x))
+        }
+        onBodyHeightChange={(id, height) =>
+          setBodies(b => b.map(x => x.id === id ? { ...x, height } : x))
         }
       />
     </div>
@@ -55,29 +69,47 @@ function App() {
 
 3D canvas for image display and polygon annotation.
 
-| Prop | Type | Description |
-|------|------|-------------|
-| `width` | `number \| string` | Canvas width (default: `'100%'`) |
-| `height` | `number \| string` | Canvas height (default: `500`) |
-| `backgroundColor` | `string` | Background color (default: `'#1a1a2e'`) |
-| `showGrid` | `boolean` | Show grid helper (default: `true`) |
-| `polygons` | `Polygon[]` | Controlled polygons array |
-| `bodies` | `Body[]` | Controlled 3D bodies array |
-| `onPolygonsChange` | `(polygons: Polygon[]) => void` | Callback when polygons change |
-| `onBodiesChange` | `(bodies: Body[]) => void` | Callback when bodies change |
-| `onImageLoad` | `(file: File) => void` | Callback when image is loaded |
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `width` | `number \| string` | `'100%'` | Canvas width |
+| `height` | `number \| string` | `500` | Canvas height |
+| `backgroundColor` | `string` | `'#1a1a2e'` | Background color |
+| `gridSize` | `number` | `10` | Size of the grid helper |
+| `showGrid` | `boolean` | `true` | Show grid helper |
+| `outlineColor` | `string` | auto | Override polygon outline color (auto-cycles through preset colors) |
+| `polygons` | `Polygon[]` | - | Controlled polygons array |
+| `bodies` | `Body[]` | - | Controlled 3D bodies array |
+| `onPolygonsChange` | `(polygons: Polygon[]) => void` | - | Callback when polygons change |
+| `onBodiesChange` | `(bodies: Body[]) => void` | - | Callback when bodies change |
+| `onImageLoad` | `(file: File) => void` | - | Callback when image is loaded |
+
+**Tools:**
+- **Select (V)** - Default mode for orbit controls and point dragging
+- **Polygon (P)** - Draw new polygons by clicking points; click first point to close
+- **Line (L)** - Add internal lines between polygon points
+- **Body (B)** - Click polygons to extrude them into 3D bodies
+
+**Interactions:**
+- Drag points to reposition them
+- Click on edges to add new points
+- Right-click points to delete them (minimum 3 points)
+- Right-click bodies to delete them (in Body tool mode)
 
 ### PolygonList
 
-List component for managing polygons.
+Hierarchical list component for managing polygons and bodies.
 
 | Prop | Type | Description |
 |------|------|-------------|
 | `polygons` | `Polygon[]` | Array of polygons to display |
+| `bodies` | `Body[]` | Array of bodies (shown nested under their parent polygon) |
 | `selectedPolygonId` | `string \| null` | Currently selected polygon ID |
-| `onSelectPolygon` | `(id: string) => void` | Selection callback |
-| `onDeletePolygon` | `(id: string) => void` | Delete callback |
-| `onPolygonColorChange` | `(id: string, color: string) => void` | Color change callback |
+| `onSelectPolygon` | `(id: string \| null) => void` | Selection callback |
+| `onDeletePolygon` | `(id: string) => void` | Delete polygon callback |
+| `onPolygonColorChange` | `(id: string, color: string) => void` | Polygon color change callback |
+| `onDeleteBody` | `(id: string) => void` | Delete body callback |
+| `onBodyColorChange` | `(id: string, color: string) => void` | Body color change callback |
+| `onBodyHeightChange` | `(id: string, height: number) => void` | Body height change callback |
 
 ### Polygon Interface
 
@@ -96,7 +128,7 @@ interface Polygon {
 interface Body {
   id: string
   polygonId: string  // reference to source polygon
-  points: THREE.Vector3[]  // base points (from polygon)
+  points: THREE.Vector3[]  // base points (synced with polygon)
   height: number
   color: string
 }
@@ -113,6 +145,9 @@ npm run dev
 
 # Build library
 npm run build
+
+# Build demo for deployment
+npm run build:demo
 
 # Lint
 npm run lint

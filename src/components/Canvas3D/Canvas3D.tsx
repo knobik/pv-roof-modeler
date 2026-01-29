@@ -851,6 +851,45 @@ export function Canvas3D({
     }
   }, [isBodiesControlled, controlledBodies])
 
+  // Sync body points with polygon points when polygons change
+  useEffect(() => {
+    const currentBodies = isBodiesControlled ? controlledBodies : internalBodies
+    if (currentBodies.length === 0) return
+
+    const updatedBodies = currentBodies.map((body) => {
+      const polygon = polygons.find((p) => p.id === body.polygonId)
+      if (!polygon) return body
+
+      // Check if points actually changed to avoid unnecessary updates
+      const pointsChanged =
+        polygon.points.length !== body.points.length ||
+        polygon.points.some(
+          (p, i) =>
+            !body.points[i] ||
+            p.x !== body.points[i].x ||
+            p.y !== body.points[i].y ||
+            p.z !== body.points[i].z
+        )
+
+      if (!pointsChanged) return body
+
+      return {
+        ...body,
+        points: polygon.points.map((p) => p.clone()),
+      }
+    })
+
+    // Only update if something actually changed
+    const hasChanges = updatedBodies.some((b, i) => b !== currentBodies[i])
+    if (hasChanges) {
+      if (isBodiesControlled) {
+        onBodiesChange?.(updatedBodies)
+      } else {
+        setInternalBodies(updatedBodies)
+      }
+    }
+  }, [polygons, internalBodies, controlledBodies, isBodiesControlled, onBodiesChange])
+
   const setPolygons = useCallback(
     (newPolygons: Polygon[]) => {
       if (!isControlled) {
