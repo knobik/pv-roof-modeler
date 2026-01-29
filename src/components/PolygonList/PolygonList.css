@@ -35,6 +35,7 @@
 .polygon-list-items {
   max-height: 400px;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .polygon-list-tree-item {
@@ -181,7 +182,7 @@
 }
 
 .polygon-list-body-item {
-  padding: 10px 12px 10px 48px;
+  padding: 10px 10px 10px 46px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.03);
 }
 
@@ -224,7 +225,7 @@
 .polygon-list-body-height {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   margin-top: 8px;
 }
 
@@ -232,7 +233,6 @@
   font-size: 11px;
   color: rgba(255, 255, 255, 0.5);
   flex-shrink: 0;
-  width: 38px;
 }
 
 .polygon-list-body-height-slider {
@@ -276,13 +276,13 @@
 }
 
 .polygon-list-body-height-input {
-  width: 55px;
-  padding: 4px 6px;
+  width: 50px;
+  padding: 4px 4px;
   background: rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 4px;
   color: rgba(255, 255, 255, 0.9);
-  font-size: 12px;
+  font-size: 11px;
   text-align: right;
   flex-shrink: 0;
 }
@@ -294,5 +294,10 @@
 
 .polygon-list-body-height-input::-webkit-inner-spin-button,
 .polygon-list-body-height-input::-webkit-outer-spin-button {
-  opacity: 1;
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.polygon-list-body-height-input[type="number"] {
+  -moz-appearance: textfield;
 }
