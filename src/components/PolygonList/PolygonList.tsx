@@ -58,10 +58,11 @@ export function PolygonList({
   onBodyColorChange,
   onBodyHeightChange,
 }: PolygonListProps) {
-  const [expandedPolygons, setExpandedPolygons] = useState<Set<string>>(new Set())
+  // Track collapsed items instead of expanded - this way items start expanded by default
+  const [collapsedPolygons, setCollapsedPolygons] = useState<Set<string>>(new Set())
 
   const toggleExpanded = useCallback((polygonId: string) => {
-    setExpandedPolygons((prev) => {
+    setCollapsedPolygons((prev) => {
       const next = new Set(prev)
       if (next.has(polygonId)) {
         next.delete(polygonId)
@@ -158,7 +159,7 @@ export function PolygonList({
           const lineCount = polygon.lines?.length || 0
           const polygonBodies = getBodiesForPolygon(polygon.id)
           const hasChildren = polygonBodies.length > 0
-          const isExpanded = expandedPolygons.has(polygon.id)
+          const isExpanded = hasChildren && !collapsedPolygons.has(polygon.id)
 
           return (
             <div key={polygon.id} className="polygon-list-tree-item">

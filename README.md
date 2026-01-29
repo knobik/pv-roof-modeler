@@ -1,4 +1,4 @@
-# PV Project Library
+# PV Roof Modeler
 
 A React component library for annotating aerial images with polygon outlines in a 3D canvas. Built with React 18/19, TypeScript, and Three.js via react-three-fiber.
 

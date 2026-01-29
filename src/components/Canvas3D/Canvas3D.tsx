@@ -993,8 +993,15 @@ export function Canvas3D({
   }, [])
 
   const handleDeleteLastPolygon = useCallback(() => {
+    if (polygons.length === 0) return
+    const lastPolygon = polygons[polygons.length - 1]
     setPolygons(polygons.slice(0, -1))
-  }, [polygons, setPolygons])
+    // Also delete any bodies associated with the deleted polygon
+    const newBodies = bodies.filter((b) => b.polygonId !== lastPolygon.id)
+    if (newBodies.length !== bodies.length) {
+      setBodies(newBodies)
+    }
+  }, [polygons, bodies, setPolygons, setBodies])
 
   const handlePointDragStart = useCallback(() => {
     setIsDraggingPoint(true)
