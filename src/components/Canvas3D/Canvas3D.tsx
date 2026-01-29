@@ -11,6 +11,14 @@ export interface Polygon {
   lines: [number, number][]  // pairs of point indices that form internal lines
 }
 
+export interface Body {
+  id: string
+  polygonId: string  // reference to source polygon
+  points: THREE.Vector3[]  // base points (from polygon)
+  height: number
+  color: string
+}
+
 export interface Canvas3DProps {
   width?: number | string
   height?: number | string
@@ -19,8 +27,10 @@ export interface Canvas3DProps {
   showGrid?: boolean
   outlineColor?: string
   polygons?: Polygon[]
+  bodies?: Body[]
   onImageLoad?: (file: File) => void
   onPolygonsChange?: (polygons: Polygon[]) => void
+  onBodiesChange?: (bodies: Body[]) => void
 }
 
 const OUTLINE_HEIGHT = 0.01
@@ -277,11 +287,204 @@ function ClosingPoint({ position, color, canClose, onClose }: ClosingPointProps)
   )
 }
 
+interface PolygonFillProps {
+  points: THREE.Vector3[]
+  color: string
+  onClick: () => void
+}
+
+function PolygonFill({ points, color, onClick }: PolygonFillProps) {
+  const [isHovered, setIsHovered] = useState(false)
+
+  const geometry = useMemo(() => {
+    const shape = new THREE.Shape()
+    // Negate Z to counteract the rotation's Z flip
+    shape.moveTo(points[0].x, -points[0].z)
+
+    for (let i = 1; i < points.length; i++) {
+      shape.lineTo(points[i].x, -points[i].z)
+    }
+    shape.closePath()
+
+    return new THREE.ShapeGeometry(shape)
+  }, [points])
+
+  const handleClick = useCallback(
+    (e: ThreeEvent<MouseEvent>) => {
+      e.stopPropagation()
+      onClick()
+    },
+    [onClick]
+  )
+
+  return (
+    <mesh
+      geometry={geometry}
+      rotation={[-Math.PI / 2, 0, 0]}
+      position={[0, OUTLINE_HEIGHT + 0.001, 0]}
+      onClick={handleClick}
+      onPointerOver={() => setIsHovered(true)}
+      onPointerOut={() => setIsHovered(false)}
+    >
+      <meshBasicMaterial
+        color={isHovered ? '#00ff00' : color}
+        transparent
+        opacity={isHovered ? 0.4 : 0.2}
+        side={THREE.DoubleSide}
+      />
+    </mesh>
+  )
+}
+
+interface BuildingBodyProps {
+  body: Body
+  isAddingBody: boolean
+  imageUrl: string | null
+  aspectRatio: number
+  onDelete: () => void
+}
+
+const PLANE_WIDTH = 5
+
+function BuildingBody({ body, isAddingBody, imageUrl, aspectRatio, onDelete }: BuildingBodyProps) {
+  const [isHovered, setIsHovered] = useState(false)
+
+  // Load the image texture
+  const texture = useMemo(() => {
+    if (!imageUrl) return null
+    const tex = new THREE.TextureLoader().load(imageUrl)
+    tex.colorSpace = THREE.SRGBColorSpace
+    return tex
+  }, [imageUrl])
+
+  // Create the extruded geometry for the walls
+  const wallsGeometry = useMemo(() => {
+    const shape = new THREE.Shape()
+    const firstPoint = body.points[0]
+    shape.moveTo(firstPoint.x, -firstPoint.z)
+
+    for (let i = 1; i < body.points.length; i++) {
+      shape.lineTo(body.points[i].x, -body.points[i].z)
+    }
+    shape.closePath()
+
+    const extrudeSettings = {
+      depth: body.height,
+      bevelEnabled: false,
+    }
+
+    return new THREE.ExtrudeGeometry(shape, extrudeSettings)
+  }, [body.points, body.height])
+
+  // Create the top face geometry with proper UV mapping for texture projection
+  const topGeometry = useMemo(() => {
+    const shape = new THREE.Shape()
+    const firstPoint = body.points[0]
+    shape.moveTo(firstPoint.x, -firstPoint.z)
+
+    for (let i = 1; i < body.points.length; i++) {
+      shape.lineTo(body.points[i].x, -body.points[i].z)
+    }
+    shape.closePath()
+
+    const geo = new THREE.ShapeGeometry(shape)
+
+    // Calculate UV coordinates to project the image onto the top face
+    const planeHeight = PLANE_WIDTH / aspectRatio
+    const uvAttribute = geo.attributes.uv
+    const posAttribute = geo.attributes.position
+
+    for (let i = 0; i < posAttribute.count; i++) {
+      const x = posAttribute.getX(i)
+      const y = posAttribute.getY(i) // This is -z in world coords
+
+      // Map world coordinates to UV (0-1 range)
+      // u maps from x, v maps from z (y in shape coords is -z)
+      const u = (x + PLANE_WIDTH / 2) / PLANE_WIDTH
+      // Flip v to match image orientation
+      const v = 1 - (-y + planeHeight / 2) / planeHeight
+
+      uvAttribute.setXY(i, u, v)
+    }
+
+    uvAttribute.needsUpdate = true
+    return geo
+  }, [body.points, aspectRatio])
+
+  const handleContextMenu = useCallback(
+    (e: ThreeEvent<MouseEvent>) => {
+      if (isAddingBody) {
+        e.stopPropagation()
+        onDelete()
+      }
+    },
+    [isAddingBody, onDelete]
+  )
+
+  return (
+    <group
+      onPointerOver={() => setIsHovered(true)}
+      onPointerOut={() => setIsHovered(false)}
+      onContextMenu={handleContextMenu}
+    >
+      {/* Walls */}
+      <mesh
+        geometry={wallsGeometry}
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[0, 0, 0]}
+      >
+        <meshStandardMaterial
+          color={isHovered && isAddingBody ? '#ff6666' : body.color}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+      {/* Top face with image texture - slightly above to avoid z-fighting */}
+      <mesh
+        geometry={topGeometry}
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[0, body.height + 0.001, 0]}
+      >
+        {texture ? (
+          <meshBasicMaterial map={texture} side={THREE.DoubleSide} />
+        ) : (
+          <meshStandardMaterial color={body.color} side={THREE.DoubleSide} />
+        )}
+      </mesh>
+    </group>
+  )
+}
+
+interface BuildingBodiesProps {
+  bodies: Body[]
+  isAddingBody: boolean
+  imageUrl: string | null
+  aspectRatio: number
+  onDeleteBody: (bodyId: string) => void
+}
+
+function BuildingBodies({ bodies, isAddingBody, imageUrl, aspectRatio, onDeleteBody }: BuildingBodiesProps) {
+  return (
+    <>
+      {bodies.map((body) => (
+        <BuildingBody
+          key={body.id}
+          body={body}
+          isAddingBody={isAddingBody}
+          imageUrl={imageUrl}
+          aspectRatio={aspectRatio}
+          onDelete={() => onDeleteBody(body.id)}
+        />
+      ))}
+    </>
+  )
+}
+
 interface PolygonOutlinesProps {
   polygons: Polygon[]
   currentPoints: THREE.Vector3[]
   currentColor: string
   isAddingLine: boolean
+  isAddingBody: boolean
   selectedLinePoints: { polygonId: string; pointIndex: number } | null
   onPointDragStart: () => void
   onPointDrag: (polygonId: string, pointIndex: number, newPosition: THREE.Vector3) => void
@@ -290,6 +493,7 @@ interface PolygonOutlinesProps {
   onAddPointOnEdge: (polygonId: string, edgeIndex: number, position: THREE.Vector3) => void
   onPointSelect: (polygonId: string, pointIndex: number) => void
   onClosePolygon: () => void
+  onPolygonClick: (polygonId: string) => void
 }
 
 function PolygonOutlines({
@@ -297,6 +501,7 @@ function PolygonOutlines({
   currentPoints,
   currentColor,
   isAddingLine,
+  isAddingBody,
   selectedLinePoints,
   onPointDragStart,
   onPointDrag,
@@ -305,6 +510,7 @@ function PolygonOutlines({
   onAddPointOnEdge,
   onPointSelect,
   onClosePolygon,
+  onPolygonClick,
 }: PolygonOutlinesProps) {
   const canClose = currentPoints.length >= 3
 
@@ -315,6 +521,14 @@ function PolygonOutlines({
 
         return (
           <group key={polygon.id}>
+            {/* Clickable polygon fill for body tool */}
+            {isAddingBody && polygon.points.length >= 3 && (
+              <PolygonFill
+                points={polygon.points}
+                color={polygon.color}
+                onClick={() => onPolygonClick(polygon.id)}
+              />
+            )}
             {/* Outline */}
             {polygon.points.length >= 2 && (
               <Line
@@ -353,7 +567,7 @@ function PolygonOutlines({
                     onDelete={() => onPointDelete(polygon.id, i)}
                     onSelect={() => onPointSelect(polygon.id, i)}
                   />
-                  {!isAddingLine && (
+                  {!isAddingLine && !isAddingBody && (
                     <ClickableEdge
                       start={point}
                       end={nextPoint}
@@ -403,8 +617,10 @@ interface SceneProps {
   backgroundColor: string
   isAddingPolygon: boolean
   isAddingLine: boolean
+  isAddingBody: boolean
   selectedLinePoints: { polygonId: string; pointIndex: number } | null
   polygons: Polygon[]
+  bodies: Body[]
   currentPoints: THREE.Vector3[]
   currentColor: string
   onPlaneClick: (point: THREE.Vector3) => void
@@ -415,6 +631,8 @@ interface SceneProps {
   onAddPointOnEdge: (polygonId: string, edgeIndex: number, position: THREE.Vector3) => void
   onPointSelect: (polygonId: string, pointIndex: number) => void
   onClosePolygon: () => void
+  onPolygonClick: (polygonId: string) => void
+  onDeleteBody: (bodyId: string) => void
   orbitControlsRef: React.RefObject<React.ComponentRef<typeof OrbitControls> | null>
   isDraggingPoint: boolean
 }
@@ -427,8 +645,10 @@ function Scene({
   backgroundColor,
   isAddingPolygon,
   isAddingLine,
+  isAddingBody,
   selectedLinePoints,
   polygons,
+  bodies,
   currentPoints,
   currentColor,
   onPlaneClick,
@@ -439,10 +659,12 @@ function Scene({
   onAddPointOnEdge,
   onPointSelect,
   onClosePolygon,
+  onPolygonClick,
+  onDeleteBody,
   orbitControlsRef,
   isDraggingPoint,
 }: SceneProps) {
-  const orbitEnabled = !isAddingPolygon && !isAddingLine && !isDraggingPoint
+  const orbitEnabled = !isAddingPolygon && !isAddingLine && !isAddingBody && !isDraggingPoint
 
   return (
     <>
@@ -457,11 +679,19 @@ function Scene({
         isAddingPolygon={isAddingPolygon}
         onPlaneClick={onPlaneClick}
       />
+      <BuildingBodies
+        bodies={bodies}
+        isAddingBody={isAddingBody}
+        imageUrl={imageUrl}
+        aspectRatio={aspectRatio}
+        onDeleteBody={onDeleteBody}
+      />
       <PolygonOutlines
         polygons={polygons}
         currentPoints={currentPoints}
         currentColor={currentColor}
         isAddingLine={isAddingLine}
+        isAddingBody={isAddingBody}
         selectedLinePoints={selectedLinePoints}
         onPointDragStart={onPointDragStart}
         onPointDrag={onPointDrag}
@@ -470,6 +700,7 @@ function Scene({
         onAddPointOnEdge={onAddPointOnEdge}
         onPointSelect={onPointSelect}
         onClosePolygon={onClosePolygon}
+        onPolygonClick={onPolygonClick}
       />
 
       <OrbitControls
@@ -519,7 +750,15 @@ const IconUndo = () => (
   </svg>
 )
 
-type Tool = 'select' | 'polygon' | 'line'
+const IconBody = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M12 2L2 7v10l10 5 10-5V7L12 2z" />
+    <path d="M2 7l10 5 10-5" />
+    <path d="M12 12v10" />
+  </svg>
+)
+
+type Tool = 'select' | 'polygon' | 'line' | 'body'
 
 export function Canvas3D({
   width = '100%',
@@ -529,8 +768,10 @@ export function Canvas3D({
   showGrid = true,
   outlineColor,
   polygons: controlledPolygons,
+  bodies: controlledBodies,
   onImageLoad,
   onPolygonsChange,
+  onBodiesChange,
 }: Canvas3DProps) {
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [aspectRatio, setAspectRatio] = useState(1)
@@ -541,6 +782,7 @@ export function Canvas3D({
     pointIndex: number
   } | null>(null)
   const [internalPolygons, setInternalPolygons] = useState<Polygon[]>([])
+  const [internalBodies, setInternalBodies] = useState<Body[]>([])
   const [currentPoints, setCurrentPoints] = useState<THREE.Vector3[]>([])
   const [isDraggingPoint, setIsDraggingPoint] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -548,9 +790,11 @@ export function Canvas3D({
 
   // Support both controlled and uncontrolled modes
   const isControlled = controlledPolygons !== undefined
+  const isBodiesControlled = controlledBodies !== undefined
 
   // Always render from internal state for smooth drag feedback
   const polygons = internalPolygons
+  const bodies = isBodiesControlled ? controlledBodies : internalBodies
 
   // Sync internal state with controlled props (but not during drag)
   useEffect(() => {
@@ -558,6 +802,12 @@ export function Canvas3D({
       setInternalPolygons(controlledPolygons)
     }
   }, [isControlled, controlledPolygons, isDraggingPoint])
+
+  useEffect(() => {
+    if (isBodiesControlled) {
+      setInternalBodies(controlledBodies)
+    }
+  }, [isBodiesControlled, controlledBodies])
 
   const setPolygons = useCallback(
     (newPolygons: Polygon[]) => {
@@ -569,8 +819,19 @@ export function Canvas3D({
     [isControlled, onPolygonsChange]
   )
 
+  const setBodies = useCallback(
+    (newBodies: Body[]) => {
+      if (!isBodiesControlled) {
+        setInternalBodies(newBodies)
+      }
+      onBodiesChange?.(newBodies)
+    },
+    [isBodiesControlled, onBodiesChange]
+  )
+
   const isAddingPolygon = activeTool === 'polygon'
   const isAddingLine = activeTool === 'line'
+  const isAddingBody = activeTool === 'body'
 
   const currentColor = outlineColor || COLORS[polygons.length % COLORS.length]
 
@@ -778,6 +1039,37 @@ export function Canvas3D({
     [selectedLinePoints, polygons, setPolygons]
   )
 
+  const handlePolygonClick = useCallback(
+    (polygonId: string) => {
+      if (!isAddingBody) return
+
+      const polygon = polygons.find((p) => p.id === polygonId)
+      if (!polygon) return
+
+      // Check if body already exists for this polygon
+      const existingBody = bodies.find((b) => b.polygonId === polygonId)
+      if (existingBody) return
+
+      const newBody: Body = {
+        id: crypto.randomUUID(),
+        polygonId: polygon.id,
+        points: polygon.points.map((p) => p.clone()),
+        height: 0.5,  // default height
+        color: polygon.color,
+      }
+
+      setBodies([...bodies, newBody])
+    },
+    [isAddingBody, polygons, bodies, setBodies]
+  )
+
+  const handleDeleteBody = useCallback(
+    (bodyId: string) => {
+      setBodies(bodies.filter((b) => b.id !== bodyId))
+    },
+    [bodies, setBodies]
+  )
+
   return (
     <div
       className={`canvas3d-container ${isDragging ? 'canvas3d-dragging' : ''}`}
@@ -811,8 +1103,10 @@ export function Canvas3D({
           backgroundColor={backgroundColor}
           isAddingPolygon={isAddingPolygon}
           isAddingLine={isAddingLine}
+          isAddingBody={isAddingBody}
           selectedLinePoints={selectedLinePoints}
           polygons={polygons}
+          bodies={bodies}
           currentPoints={currentPoints}
           currentColor={currentColor}
           onPlaneClick={handlePlaneClick}
@@ -823,6 +1117,8 @@ export function Canvas3D({
           onAddPointOnEdge={handleAddPointOnEdge}
           onPointSelect={handlePointSelect}
           onClosePolygon={handleFinishPolygon}
+          onPolygonClick={handlePolygonClick}
+          onDeleteBody={handleDeleteBody}
           orbitControlsRef={orbitControlsRef}
           isDraggingPoint={isDraggingPoint}
         />
@@ -854,6 +1150,15 @@ export function Canvas3D({
           >
             <IconLine />
             <span className="canvas3d-tool-tooltip">Add Line (L)</span>
+          </button>
+          <button
+            className={`canvas3d-tool ${activeTool === 'body' ? 'canvas3d-tool--active' : ''}`}
+            onClick={() => handleSelectTool('body')}
+            disabled={polygons.length === 0}
+            title="Add Body"
+          >
+            <IconBody />
+            <span className="canvas3d-tool-tooltip">Add Body (B)</span>
           </button>
 
           <div className="canvas3d-toolbox-divider" />
@@ -899,6 +1204,12 @@ export function Canvas3D({
           {selectedLinePoints
             ? 'Click another point to create a line'
             : 'Click on a point to start a line'}
+        </div>
+      )}
+
+      {isAddingBody && (
+        <div className="canvas3d-status">
+          Click on a polygon to create a 3D body • Right-click body to delete
         </div>
       )}
     </div>

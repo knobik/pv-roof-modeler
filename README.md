@@ -8,6 +8,7 @@ A React component library for annotating aerial images with polygon outlines in 
 - **Polygon Drawing** - Draw polygon outlines to mark boundaries (e.g., house rooftops)
 - **Point Editing** - Drag points to adjust polygons, add points on edges, remove points with right-click
 - **Internal Lines** - Add lines between polygon points to define faces
+- **3D Bodies** - Extract polygons into 3D extruded building shapes
 - **Polygon Management** - Companion component for listing, selecting, and managing polygons
 
 ## Installation
@@ -61,7 +62,9 @@ function App() {
 | `backgroundColor` | `string` | Background color (default: `'#1a1a2e'`) |
 | `showGrid` | `boolean` | Show grid helper (default: `true`) |
 | `polygons` | `Polygon[]` | Controlled polygons array |
+| `bodies` | `Body[]` | Controlled 3D bodies array |
 | `onPolygonsChange` | `(polygons: Polygon[]) => void` | Callback when polygons change |
+| `onBodiesChange` | `(bodies: Body[]) => void` | Callback when bodies change |
 | `onImageLoad` | `(file: File) => void` | Callback when image is loaded |
 
 ### PolygonList
@@ -84,6 +87,18 @@ interface Polygon {
   points: THREE.Vector3[]
   color: string
   lines: [number, number][]  // pairs of point indices for internal lines
+}
+```
+
+### Body Interface
+
+```typescript
+interface Body {
+  id: string
+  polygonId: string  // reference to source polygon
+  points: THREE.Vector3[]  // base points (from polygon)
+  height: number
+  color: string
 }
 ```
 
