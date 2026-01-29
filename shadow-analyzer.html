@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shadow Analyzer - Date/Time Estimator</title>
+  <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #1a1a2e;
+      color: #eee;
+      min-height: 100vh;
+    }
+    h1 {
+      margin: 0 0 20px 0;
+      color: #00d9ff;
+    }
+    .container {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .panel {
+      background: #16213e;
+      border-radius: 8px;
+      padding: 20px;
+      flex: 1;
+      min-width: 300px;
+    }
+    .panel h2 {
+      margin: 0 0 15px 0;
+      color: #00d9ff;
+      font-size: 1.2em;
+    }
+    .image-container {
+      position: relative;
+      display: inline-block;
+      cursor: crosshair;
+    }
+    #canvas {
+      max-width: 100%;
+      border: 2px solid #0f3460;
+      border-radius: 4px;
+    }
+    .controls {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      color: #aaa;
+    }
+    input[type="file"] {
+      margin-bottom: 15px;
+    }
+    input[type="number"], select {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      border: 1px solid #0f3460;
+      border-radius: 4px;
+      background: #1a1a2e;
+      color: #eee;
+    }
+    button {
+      background: #00d9ff;
+      color: #1a1a2e;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+    button:hover {
+      background: #00b8d9;
+    }
+    button:disabled {
+      background: #555;
+      cursor: not-allowed;
+    }
+    button.secondary {
+      background: #0f3460;
+      color: #eee;
+    }
+    .measurement {
+      background: #1a1a2e;
+      padding: 10px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+    .measurement strong {
+      color: #00d9ff;
+    }
+    .results {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .result-item {
+      background: #1a1a2e;
+      padding: 10px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+      border-left: 3px solid #00d9ff;
+    }
+    .result-item .date {
+      font-weight: bold;
+      color: #00d9ff;
+    }
+    .result-item .details {
+      font-size: 0.9em;
+      color: #aaa;
+      margin-top: 5px;
+    }
+    .instructions {
+      background: #0f3460;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 15px;
+      font-size: 0.9em;
+    }
+    .instructions ol {
+      margin: 10px 0 0 0;
+      padding-left: 20px;
+    }
+    .mode-indicator {
+      background: #e94560;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-bottom: 10px;
+    }
+    .mode-indicator.calibration {
+      background: #f39c12;
+    }
+    .mode-indicator.shadow {
+      background: #27ae60;
+    }
+  </style>
+</head>
+<body>
+  <h1>🌞 Shadow Analyzer</h1>
+  <p>Estimate when an aerial photo was taken based on building shadows</p>
+
+  <div class="container">
+    <div class="panel" style="flex: 2;">
+      <h2>Image</h2>
+      <input type="file" id="imageInput" accept="image/*">
+      <div class="image-container">
+        <canvas id="canvas" width="800" height="600"></canvas>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Settings</h2>
+
+      <div class="instructions">
+        <strong>How to use:</strong>
+        <ol>
+          <li>Load your aerial image</li>
+          <li>Set a calibration reference (measure a known object)</li>
+          <li>Measure the shadow (from building base to shadow tip)</li>
+          <li>Click "Find Matching Dates"</li>
+        </ol>
+      </div>
+
+      <div class="controls">
+        <label>Location</label>
+        <input type="number" id="lat" value="52.2297" step="0.0001" placeholder="Latitude">
+        <input type="number" id="lon" value="21.0122" step="0.0001" placeholder="Longitude">
+
+        <label>Building Height (meters)</label>
+        <input type="number" id="buildingHeight" value="3" step="0.5" min="1" max="50">
+        <small style="color: #888;">1 floor ≈ 3m, 2 floors ≈ 6m</small>
+
+        <label style="margin-top: 15px;">Season Filter</label>
+        <select id="seasonFilter">
+          <option value="summer">Summer/Early Autumn (May-Sep)</option>
+          <option value="all">All Year</option>
+          <option value="spring">Spring (Mar-May)</option>
+          <option value="winter">Winter (Nov-Feb)</option>
+        </select>
+
+        <label style="margin-top: 15px;">Ground Sample Distance (m/pixel)</label>
+        <input type="number" id="gsd" value="0.3" step="0.05" min="0.05" max="2">
+        <small style="color: #888;">Or use calibration below</small>
+      </div>
+
+      <h2>Calibration</h2>
+      <div id="modeIndicator" class="mode-indicator">Mode: None</div>
+
+      <button id="calibrateBtn" class="secondary">📏 Calibrate Scale</button>
+      <input type="number" id="calibrationLength" value="4.5" step="0.1" style="width: 80px; display: inline;">
+      <small style="color: #888;">meters (car ≈ 4.5m)</small>
+
+      <div class="measurement" id="calibrationResult" style="display: none;">
+        <strong>Calibration:</strong> <span id="calibrationText"></span>
+      </div>
+
+      <h2>Shadow Measurement</h2>
+      <button id="measureBtn">📐 Measure Shadow</button>
+
+      <div class="measurement" id="shadowResult" style="display: none;">
+        <strong>Shadow:</strong> <span id="shadowText"></span>
+      </div>
+
+      <button id="findDatesBtn" disabled style="margin-top: 15px; width: 100%;">🔍 Find Matching Dates</button>
+    </div>
+
+    <div class="panel">
+      <h2>Results</h2>
+      <div class="measurement" id="calculatedValues" style="display: none;">
+        <strong>Calculated:</strong><br>
+        Shadow length: <span id="shadowLengthM">-</span> m<br>
+        Required sun elevation: <span id="sunElevation">-</span>°<br>
+        Shadow direction: <span id="shadowDirection">-</span>°<br>
+        Sun azimuth: <span id="sunAzimuth">-</span>°
+      </div>
+      <div class="results" id="results">
+        <p style="color: #888;">Measure a shadow to find possible dates...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let image = null;
+    let mode = null; // 'calibrate' or 'measure'
+    let points = [];
+    let calibrationPixels = null;
+    let shadowMeasurement = null; // { pixels, angle }
+
+    // Load image
+    document.getElementById('imageInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+            image = img;
+            // Scale to fit canvas while maintaining aspect ratio
+            const scale = Math.min(800 / img.width, 600 / img.height, 1);
+            canvas.width = img.width * scale;
+            canvas.height = img.height * scale;
+            redraw();
+          };
+          img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Mode buttons
+    document.getElementById('calibrateBtn').addEventListener('click', () => {
+      mode = 'calibrate';
+      points = [];
+      updateModeIndicator();
+    });
+
+    document.getElementById('measureBtn').addEventListener('click', () => {
+      mode = 'measure';
+      points = [];
+      updateModeIndicator();
+    });
+
+    function updateModeIndicator() {
+      const indicator = document.getElementById('modeIndicator');
+      if (mode === 'calibrate') {
+        indicator.textContent = 'Mode: Click 2 points to calibrate';
+        indicator.className = 'mode-indicator calibration';
+      } else if (mode === 'measure') {
+        indicator.textContent = 'Mode: Click building base, then shadow tip';
+        indicator.className = 'mode-indicator shadow';
+      } else {
+        indicator.textContent = 'Mode: None';
+        indicator.className = 'mode-indicator';
+      }
+    }
+
+    // Canvas click handler
+    canvas.addEventListener('click', (e) => {
+      if (!mode || !image) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      points.push({ x, y });
+      redraw();
+
+      if (points.length === 2) {
+        const dx = points[1].x - points[0].x;
+        const dy = points[1].y - points[0].y;
+        const pixels = Math.sqrt(dx * dx + dy * dy);
+
+        if (mode === 'calibrate') {
+          calibrationPixels = pixels;
+          const knownLength = parseFloat(document.getElementById('calibrationLength').value);
+          const gsd = knownLength / pixels;
+          document.getElementById('gsd').value = gsd.toFixed(4);
+          document.getElementById('calibrationResult').style.display = 'block';
+          document.getElementById('calibrationText').textContent =
+            `${pixels.toFixed(1)} px = ${knownLength} m (GSD: ${gsd.toFixed(4)} m/px)`;
+        } else if (mode === 'measure') {
+          // Calculate angle from north (assuming north is up, which is -Y direction)
+          // atan2 gives angle from positive X axis, counterclockwise
+          // We want angle from north (negative Y), clockwise
+          let angle = Math.atan2(dx, -dy) * (180 / Math.PI);
+          if (angle < 0) angle += 360;
+
+          shadowMeasurement = { pixels, angle };
+          document.getElementById('shadowResult').style.display = 'block';
+          document.getElementById('shadowText').textContent =
+            `${pixels.toFixed(1)} px, direction: ${angle.toFixed(1)}° from north`;
+          document.getElementById('findDatesBtn').disabled = false;
+        }
+
+        mode = null;
+        updateModeIndicator();
+      }
+    });
+
+    function redraw() {
+      if (!image) {
+        ctx.fillStyle = '#1a1a2e';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#888';
+        ctx.font = '16px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Load an image to begin', canvas.width / 2, canvas.height / 2);
+        return;
+      }
+
+      ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+      // Draw points
+      points.forEach((p, i) => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+        ctx.fillStyle = mode === 'calibrate' ? '#f39c12' : '#27ae60';
+        ctx.fill();
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      });
+
+      // Draw line between points
+      if (points.length === 2) {
+        ctx.beginPath();
+        ctx.moveTo(points[0].x, points[0].y);
+        ctx.lineTo(points[1].x, points[1].y);
+        ctx.strokeStyle = mode === 'calibrate' ? '#f39c12' : '#27ae60';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    }
+
+    // Find dates button
+    document.getElementById('findDatesBtn').addEventListener('click', findMatchingDates);
+
+    function findMatchingDates() {
+      if (!shadowMeasurement) return;
+
+      const lat = parseFloat(document.getElementById('lat').value);
+      const lon = parseFloat(document.getElementById('lon').value);
+      const buildingHeight = parseFloat(document.getElementById('buildingHeight').value);
+      const gsd = parseFloat(document.getElementById('gsd').value);
+      const seasonFilter = document.getElementById('seasonFilter').value;
+
+      // Calculate shadow length in meters
+      const shadowLengthM = shadowMeasurement.pixels * gsd;
+
+      // Calculate required sun elevation
+      const requiredElevation = Math.atan(buildingHeight / shadowLengthM) * (180 / Math.PI);
+
+      // Sun azimuth is opposite to shadow direction
+      const sunAzimuth = (shadowMeasurement.angle + 180) % 360;
+
+      // Update display
+      document.getElementById('calculatedValues').style.display = 'block';
+      document.getElementById('shadowLengthM').textContent = shadowLengthM.toFixed(2);
+      document.getElementById('sunElevation').textContent = requiredElevation.toFixed(1);
+      document.getElementById('shadowDirection').textContent = shadowMeasurement.angle.toFixed(1);
+      document.getElementById('sunAzimuth').textContent = sunAzimuth.toFixed(1);
+
+      // Define month ranges based on season filter
+      let monthRanges;
+      switch (seasonFilter) {
+        case 'summer':
+          monthRanges = [[4, 8]]; // May-September (0-indexed: 4-8)
+          break;
+        case 'spring':
+          monthRanges = [[2, 4]]; // March-May
+          break;
+        case 'winter':
+          monthRanges = [[10, 11], [0, 1]]; // Nov-Feb
+          break;
+        default:
+          monthRanges = [[0, 11]]; // All year
+      }
+
+      // Search for matching dates
+      const matches = [];
+      const year = 2025;
+      const elevationTolerance = 3; // degrees
+      const azimuthTolerance = 15; // degrees
+
+      for (const [startMonth, endMonth] of monthRanges) {
+        for (let month = startMonth; month <= endMonth; month++) {
+          // Check every 3rd day
+          for (let day = 1; day <= 28; day += 3) {
+            // Check every 30 minutes from 6:00 to 18:00
+            for (let hour = 6; hour <= 18; hour++) {
+              for (let minute = 0; minute < 60; minute += 30) {
+                const date = new Date(year, month, day, hour, minute);
+                const sunPos = SunCalc.getPosition(date, lat, lon);
+
+                // Convert from radians and adjust coordinate system
+                // SunCalc altitude is in radians, 0 = horizon
+                const elevation = sunPos.altitude * (180 / Math.PI);
+
+                // SunCalc azimuth: 0 = south, increases clockwise
+                // We want: 0 = north, increases clockwise
+                let azimuth = (sunPos.azimuth * (180 / Math.PI) + 180) % 360;
+
+                if (elevation > 10) { // Sun above horizon
+                  const elevDiff = Math.abs(elevation - requiredElevation);
+                  let azimDiff = Math.abs(azimuth - sunAzimuth);
+                  if (azimDiff > 180) azimDiff = 360 - azimDiff;
+
+                  if (elevDiff <= elevationTolerance && azimDiff <= azimuthTolerance) {
+                    matches.push({
+                      date,
+                      elevation,
+                      azimuth,
+                      elevDiff,
+                      azimDiff,
+                      score: elevDiff + azimDiff * 0.5
+                    });
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // Sort by match quality
+      matches.sort((a, b) => a.score - b.score);
+
+      // Display results
+      const resultsDiv = document.getElementById('results');
+
+      if (matches.length === 0) {
+        resultsDiv.innerHTML = '<p style="color: #e94560;">No matches found. Try adjusting building height or GSD.</p>';
+        return;
+      }
+
+      // Group by month and show best matches
+      const byMonth = {};
+      matches.forEach(m => {
+        const monthName = m.date.toLocaleString('en', { month: 'long' });
+        if (!byMonth[monthName]) byMonth[monthName] = [];
+        if (byMonth[monthName].length < 5) {
+          byMonth[monthName].push(m);
+        }
+      });
+
+      let html = `<p style="color: #27ae60;">Found ${matches.length} potential matches:</p>`;
+
+      for (const [month, times] of Object.entries(byMonth)) {
+        html += `<h3 style="color: #00d9ff; margin: 15px 0 10px 0;">${month}</h3>`;
+        for (const m of times) {
+          const timeStr = m.date.toLocaleString('en', {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+          });
+          html += `
+            <div class="result-item">
+              <div class="date">${timeStr} (local time)</div>
+              <div class="details">
+                Sun elevation: ${m.elevation.toFixed(1)}° (target: ${requiredElevation.toFixed(1)}°)<br>
+                Sun azimuth: ${m.azimuth.toFixed(1)}° (target: ${sunAzimuth.toFixed(1)}°)
+              </div>
+            </div>
+          `;
+        }
+      }
+
+      resultsDiv.innerHTML = html;
+    }
+
+    // Initial draw
+    redraw();
+  </script>
+</body>
+</html>
