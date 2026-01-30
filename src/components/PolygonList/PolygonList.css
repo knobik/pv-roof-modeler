@@ -182,7 +182,7 @@
 }
 
 .polygon-list-body-item {
-  padding: 10px 10px 10px 46px;
+  padding: 10px 12px 10px 38px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.03);
 }
 
@@ -227,16 +227,19 @@
   align-items: center;
   gap: 6px;
   margin-top: 8px;
+  min-width: 0;
 }
 
 .polygon-list-body-height-label {
   font-size: 11px;
   color: rgba(255, 255, 255, 0.5);
   flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .polygon-list-body-height-slider {
   flex: 1;
+  min-width: 0;
   height: 4px;
   -webkit-appearance: none;
   appearance: none;
@@ -276,8 +279,8 @@
 }
 
 .polygon-list-body-height-input {
-  width: 50px;
-  padding: 4px 4px;
+  width: 55px;
+  padding: 4px 5px;
   background: rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 4px;
@@ -285,6 +288,7 @@
   font-size: 11px;
   text-align: right;
   flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .polygon-list-body-height-input:focus {

@@ -47,6 +47,7 @@ export interface Canvas3DProps {
   /** History context for undo/redo support */
   historyContext?: HistoryContextValue
   onImageLoad?: (file: File) => void
+  onImageDimensionsChange?: (width: number, height: number) => void
   onPolygonsChange?: (polygons: Polygon[]) => void
   onBodiesChange?: (bodies: Body[]) => void
   onTimeOfDayChange?: (time: number) => void
@@ -1011,10 +1012,12 @@ export function Canvas3D({
   latitude,
   longitude,
   date,
+  pixelsPerMeter: _pixelsPerMeter,
   historyContext,
   polygons: controlledPolygons,
   bodies: controlledBodies,
   onImageLoad,
+  onImageDimensionsChange,
   onPolygonsChange,
   onBodiesChange,
   onTimeOfDayChange,
@@ -1142,10 +1145,11 @@ export function Canvas3D({
         setAspectRatio(img.width / img.height)
         setImageUrl(url)
         onImageLoad?.(file)
+        onImageDimensionsChange?.(img.width, img.height)
       }
       img.src = url
     },
-    [onImageLoad]
+    [onImageLoad, onImageDimensionsChange]
   )
 
   const handleDrop = useCallback(

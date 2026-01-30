@@ -87,6 +87,7 @@ function PVRoofModelerInner({
 }: PVRoofModelerInnerProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [selectedPolygonId, setSelectedPolygonId] = useState<string | null>(null)
+  const [imageWidth, setImageWidth] = useState<number | null>(null)
 
   // Use external history if provided, otherwise use internal
   const history = externalHistory || internalHistory
@@ -295,6 +296,14 @@ function PVRoofModelerInner({
     [onSelectionChange]
   )
 
+  // Image dimensions handler
+  const handleImageDimensionsChange = useCallback(
+    (width: number) => {
+      setImageWidth(width)
+    },
+    []
+  )
+
   const sidebar = !hideSidebar && (
     <div
       className="pv-roof-modeler-sidebar"
@@ -304,6 +313,8 @@ function PVRoofModelerInner({
         polygons={polygons}
         bodies={bodies}
         selectedPolygonId={selectedPolygonId}
+        pixelsPerMeter={pixelsPerMeter}
+        imageWidth={imageWidth ?? undefined}
         onSelectPolygon={handleSelectPolygon}
         onDeletePolygon={handleDeletePolygon}
         onPolygonColorChange={handlePolygonColorChange}
@@ -338,6 +349,7 @@ function PVRoofModelerInner({
           onTimeOfDayChange={onTimeOfDayChange}
           onBodiesChange={handleBodiesChange}
           onImageLoad={onImageLoad}
+          onImageDimensionsChange={handleImageDimensionsChange}
         />
       </div>
       {sidebarPosition === 'right' && sidebar}

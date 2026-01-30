@@ -2,10 +2,17 @@ import { useCallback, useState } from 'react'
 import type { Polygon, Body } from '../Canvas3D/Canvas3D'
 import './PolygonList.css'
 
+// The image plane width in Three.js units (must match Canvas3D PLANE_WIDTH)
+const PLANE_WIDTH = 5
+
 export interface PolygonListProps {
   polygons: Polygon[]
   bodies?: Body[]
   selectedPolygonId?: string | null
+  /** Pixels per meter ratio for height conversion */
+  pixelsPerMeter?: number
+  /** Image width in pixels for height conversion */
+  imageWidth?: number
   onSelectPolygon?: (polygonId: string | null) => void
   onDeletePolygon?: (polygonId: string) => void
   onPolygonColorChange?: (polygonId: string, color: string) => void
@@ -51,6 +58,8 @@ export function PolygonList({
   polygons,
   bodies = [],
   selectedPolygonId,
+  pixelsPerMeter,
+  imageWidth,
   onSelectPolygon,
   onDeletePolygon,
   onPolygonColorChange,
@@ -60,6 +69,30 @@ export function PolygonList({
 }: PolygonListProps) {
   // Track collapsed items instead of expanded - this way items start expanded by default
   const [collapsedPolygons, setCollapsedPolygons] = useState<Set<string>>(new Set())
+
+  // Calculate units per meter for height conversion
+  // unitsPerMeter = PLANE_WIDTH * pixelsPerMeter / imageWidth
+  const unitsPerMeter = pixelsPerMeter && imageWidth
+    ? (PLANE_WIDTH * pixelsPerMeter) / imageWidth
+    : null
+
+  // Convert height from Three.js units to meters
+  const unitsToMeters = useCallback(
+    (units: number): number => {
+      if (!unitsPerMeter) return units
+      return units / unitsPerMeter
+    },
+    [unitsPerMeter]
+  )
+
+  // Convert height from meters to Three.js units
+  const metersToUnits = useCallback(
+    (meters: number): number => {
+      if (!unitsPerMeter) return meters
+      return meters * unitsPerMeter
+    },
+    [unitsPerMeter]
+  )
 
   const toggleExpanded = useCallback((polygonId: string) => {
     setCollapsedPolygons((prev) => {
@@ -119,12 +152,14 @@ export function PolygonList({
   const handleBodyHeightChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>, bodyId: string) => {
       e.stopPropagation()
-      const height = parseFloat(e.target.value)
-      if (!isNaN(height) && height > 0) {
-        onBodyHeightChange?.(bodyId, height)
+      const inputValue = parseFloat(e.target.value)
+      if (!isNaN(inputValue) && inputValue > 0) {
+        // Convert from meters to units if conversion is available
+        const heightInUnits = metersToUnits(inputValue)
+        onBodyHeightChange?.(bodyId, heightInUnits)
       }
     },
-    [onBodyHeightChange]
+    [onBodyHeightChange, metersToUnits]
   )
 
   const getBodiesForPolygon = useCallback(
@@ -234,24 +269,26 @@ export function PolygonList({
                         </button>
                       </div>
                       <div className="polygon-list-body-height">
-                        <label className="polygon-list-body-height-label">Height</label>
+                        <label className="polygon-list-body-height-label">
+                          Height{unitsPerMeter ? ' (m)' : ''}
+                        </label>
                         <input
                           type="range"
                           className="polygon-list-body-height-slider"
-                          min="0.1"
-                          max="3"
-                          step="0.05"
-                          value={body.height}
+                          min={unitsPerMeter ? '0.5' : '0.1'}
+                          max={unitsPerMeter ? '20' : '3'}
+                          step={unitsPerMeter ? '0.5' : '0.05'}
+                          value={unitsToMeters(body.height)}
                           onChange={(e) => handleBodyHeightChange(e, body.id)}
-                          title={`Height: ${body.height.toFixed(2)}`}
+                          title={`Height: ${unitsToMeters(body.height).toFixed(2)}${unitsPerMeter ? 'm' : ''}`}
                         />
                         <input
                           type="number"
                           className="polygon-list-body-height-input"
-                          min="0.1"
-                          max="10"
-                          step="0.1"
-                          value={body.height}
+                          min={unitsPerMeter ? '0.1' : '0.1'}
+                          max={unitsPerMeter ? '50' : '10'}
+                          step={unitsPerMeter ? '0.1' : '0.1'}
+                          value={parseFloat(unitsToMeters(body.height).toFixed(2))}
                           onChange={(e) => handleBodyHeightChange(e, body.id)}
                         />
                       </div>
