@@ -37,8 +37,8 @@ src/components/Canvas3D/
 ├── constants.ts      # OUTLINE_HEIGHT, POINT_SIZE, PLANE_WIDTH, etc.
 ├── primitives/       # Low-level 3D components (DraggablePoint, ClickableEdge, etc.)
 ├── scene/            # Scene composition (Scene, ImagePlane, SunLight, BuildingBody, etc.)
-├── tools/            # Tool hooks (useSelectTool, usePolygonTool, useLineTool, etc.)
-├── ui/               # HTML overlay components (Toolbox, StatusBar, MeasurePanel, etc.)
+├── tools/            # Tool hooks + useToolManager (centralizes tool orchestration)
+├── ui/               # HTML overlay components (Toolbox, StatusBar, CalibrationPanel, etc.)
 └── context/          # React contexts (CanvasContext, ToolContext)
 ```
 
@@ -48,15 +48,21 @@ src/components/Canvas3D/
 
 2. **Point Scaling**: All interactive points use `useFrame` to scale based on camera distance, maintaining consistent visual size regardless of zoom.
 
-3. **Tool Hooks**: Each tool (select, polygon, line, body, measure) has a dedicated hook in `tools/` that encapsulates tool-specific state and handlers.
+3. **Tool Manager**: `useToolManager` centralizes all tool orchestration—it initializes tool hooks, routes events to the active tool, handles tool switching with lifecycle (onActivate/onDeactivate), and exposes computed flags like `isDrawing` and `orbitEnabled`.
+
+4. **Context Architecture**: Two contexts provide shared state:
+   - `ToolContext`: Active tool, tool-specific state (currentPoints, calibrationPoints, selectedLinePoints)
+   - `CanvasContext`: Canvas state (polygons, bodies, imageData, drag state, pixel/meter ratio)
 
 ## Adding New Tools
 
-1. Create `tools/NewTool/useNewTool.ts` hook
-2. Export from `tools/index.ts`
-3. Add tool name to `ToolName` type in `types.ts`
-4. Add tool button to `ui/Toolbox.tsx`
-5. Wire up handlers in `Canvas3D.tsx`
+1. Create `tools/NewTool/useNewTool.ts` hook implementing `ToolHookReturn<YourToolState>`
+2. Export hook and types from `tools/NewTool/index.ts` and `tools/index.ts`
+3. Add tool name to `ToolName` union in `types.ts`
+4. Initialize the tool hook in `useToolManager.ts` and add to the `tools` object
+5. Route events to your tool in `useToolManager.handlers`
+6. Add tool button to `ui/Toolbox.tsx`
+7. If the tool needs shared state, add it to `ToolContext`
 
 ## Key Constants
 
@@ -64,6 +70,13 @@ Defined in `Canvas3D/constants.ts`:
 - `PLANE_WIDTH = 5` - Width of image plane in 3D units (used for pixel-to-meter calculations)
 - `OUTLINE_HEIGHT = 0.01` - Y-position for polygon outlines
 - `BASE_CAMERA_DISTANCE = 8` - Reference distance for point scaling
+
+## History System
+
+The `useHistory` hook (in `src/hooks/useHistory.tsx`) provides undo/redo for `PVRoofModeler`:
+- `takeSnapshot()` - Call before destructive operations to save state
+- `beginBatch()`/`endBatch()` - Group multiple changes (e.g., point dragging) into one undo step
+- State is deep-cloned using `Vector3.clone()` to preserve Three.js objects
 
 ## User Preferences
 
