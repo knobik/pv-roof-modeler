@@ -12,3 +12,6 @@ export type { ClosingPointProps } from './ClosingPoint'
 
 export { PolygonFill } from './PolygonFill'
 export type { PolygonFillProps } from './PolygonFill'
+
+export { EdgeLabel } from './EdgeLabel'
+export type { EdgeLabelProps } from './EdgeLabel'

@@ -50,6 +50,7 @@ export function Canvas3D(props: Canvas3DProps) {
     polygons: controlledPolygons,
     bodies: controlledBodies,
     historyContext,
+    pixelsPerMeter,
     onPolygonsChange,
     onBodiesChange,
     ...restProps
@@ -60,6 +61,7 @@ export function Canvas3D(props: Canvas3DProps) {
       controlledPolygons={controlledPolygons}
       controlledBodies={controlledBodies}
       historyContext={historyContext}
+      pixelsPerMeter={pixelsPerMeter}
       onPolygonsChange={onPolygonsChange}
       onBodiesChange={onBodiesChange}
     >
@@ -70,7 +72,7 @@ export function Canvas3D(props: Canvas3DProps) {
   )
 }
 
-interface Canvas3DInnerProps extends Omit<Canvas3DProps, 'polygons' | 'bodies' | 'onPolygonsChange' | 'onBodiesChange'> {}
+interface Canvas3DInnerProps extends Omit<Canvas3DProps, 'polygons' | 'bodies' | 'pixelsPerMeter' | 'onPolygonsChange' | 'onBodiesChange'> {}
 
 function Canvas3DInner({
   width = '100%',
@@ -85,12 +87,10 @@ function Canvas3DInner({
   latitude,
   longitude,
   date,
-  pixelsPerMeter: _pixelsPerMeter,
   historyContext,
   onImageLoad,
   onImageDimensionsChange,
   onTimeOfDayChange,
-  onPixelsPerMeterChange: _onPixelsPerMeterChange,
 }: Canvas3DInnerProps) {
   // Get canvas context
   const {
@@ -99,9 +99,12 @@ function Canvas3DInner({
     aspectRatio,
     setAspectRatio,
     setImageWidth,
+    imageWidth,
     polygons,
     bodies,
     isDraggingPoint,
+    pixelsPerMeter,
+    planeWidth,
   } = useCanvasContext()
 
   // Get tool manager
@@ -241,6 +244,9 @@ function Canvas3DInner({
           bodies={bodies}
           currentPoints={toolManager.currentPoints}
           currentColor={currentColor}
+          pixelsPerMeter={pixelsPerMeter}
+          imageWidth={imageWidth}
+          planeWidth={planeWidth}
           onPlaneClick={handlers.onPlaneClick!}
           onCalibrationClick={handlers.onPlaneClick!}
           onPointDragStart={handlers.onPointDragStart!}

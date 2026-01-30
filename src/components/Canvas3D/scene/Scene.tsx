@@ -31,6 +31,9 @@ export interface SceneProps {
   bodies: Body[]
   currentPoints: THREE.Vector3[]
   currentColor: string
+  pixelsPerMeter: number | null
+  imageWidth: number | null
+  planeWidth: number
   onPlaneClick: (point: THREE.Vector3) => void
   onCalibrationClick: (point: THREE.Vector3) => void
   onPointDragStart: () => void
@@ -68,6 +71,9 @@ export function Scene({
   bodies,
   currentPoints,
   currentColor,
+  pixelsPerMeter,
+  imageWidth,
+  planeWidth,
   onPlaneClick,
   onCalibrationClick,
   onPointDragStart,
@@ -143,6 +149,9 @@ export function Scene({
         isAddingLine={isAddingLine}
         isAddingBody={isAddingBody}
         selectedLinePoints={selectedLinePoints}
+        pixelsPerMeter={pixelsPerMeter}
+        imageWidth={imageWidth}
+        planeWidth={planeWidth}
         onPointDragStart={onPointDragStart}
         onPointDrag={onPointDrag}
         onPointDragEnd={onPointDragEnd}

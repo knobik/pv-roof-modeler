@@ -33,6 +33,9 @@ export interface CanvasContextValue {
 
   // Computed values
   planeWidth: number
+
+  // Measurement
+  pixelsPerMeter: number | null
 }
 
 const CanvasContext = createContext<CanvasContextValue | null>(null)
@@ -42,6 +45,7 @@ export interface CanvasProviderProps {
   controlledPolygons?: Polygon[]
   controlledBodies?: Body[]
   historyContext?: HistoryContextValue
+  pixelsPerMeter?: number
   onPolygonsChange?: (polygons: Polygon[]) => void
   onBodiesChange?: (bodies: Body[]) => void
 }
@@ -51,6 +55,7 @@ export function CanvasProvider({
   controlledPolygons,
   controlledBodies,
   historyContext,
+  pixelsPerMeter,
   onPolygonsChange,
   onBodiesChange,
 }: CanvasProviderProps) {
@@ -164,6 +169,7 @@ export function CanvasProvider({
     isDraggingPoint,
     setIsDraggingPoint,
     planeWidth: PLANE_WIDTH,
+    pixelsPerMeter: pixelsPerMeter ?? null,
   }), [
     imageUrl,
     aspectRatio,
@@ -176,6 +182,7 @@ export function CanvasProvider({
     setBodies,
     historyContext,
     isDraggingPoint,
+    pixelsPerMeter,
   ])
 
   return (

@@ -1,7 +1,7 @@
 import { Line } from '@react-three/drei'
 import * as THREE from 'three'
 import type { Polygon } from '../types'
-import { DraggablePoint, ClickableEdge, ClosingPoint, ScaledPoint, PolygonFill } from '../primitives'
+import { DraggablePoint, ClickableEdge, ClosingPoint, ScaledPoint, PolygonFill, EdgeLabel } from '../primitives'
 
 export interface PolygonOutlinesProps {
   polygons: Polygon[]
@@ -10,6 +10,9 @@ export interface PolygonOutlinesProps {
   isAddingLine: boolean
   isAddingBody: boolean
   selectedLinePoints: { polygonId: string; pointIndex: number } | null
+  pixelsPerMeter: number | null
+  imageWidth: number | null
+  planeWidth: number
   onPointDragStart: () => void
   onPointDrag: (polygonId: string, pointIndex: number, newPosition: THREE.Vector3) => void
   onPointDragEnd: () => void
@@ -27,6 +30,9 @@ export function PolygonOutlines({
   isAddingLine,
   isAddingBody,
   selectedLinePoints,
+  pixelsPerMeter,
+  imageWidth,
+  planeWidth,
   onPointDragStart,
   onPointDrag,
   onPointDragEnd,
@@ -37,6 +43,7 @@ export function PolygonOutlines({
   onPolygonClick,
 }: PolygonOutlinesProps) {
   const canClose = currentPoints.length >= 3
+  const showEdgeLabels = pixelsPerMeter !== null && imageWidth !== null
 
   return (
     <>
@@ -64,6 +71,30 @@ export function PolygonOutlines({
                 lineWidth={2}
               />
             )}
+            {/* Edge length labels */}
+            {showEdgeLabels && polygon.points.length >= 2 && (() => {
+              // Calculate polygon centroid for determining outside direction
+              const centroid = new THREE.Vector3()
+              polygon.points.forEach(p => centroid.add(p))
+              centroid.divideScalar(polygon.points.length)
+
+              return polygon.points.map((point, i) => {
+                const nextIndex = (i + 1) % polygon.points.length
+                const nextPoint = polygon.points[nextIndex]
+                return (
+                  <EdgeLabel
+                    key={`edge-label-${polygon.id}-${i}`}
+                    start={point}
+                    end={nextPoint}
+                    polygonCentroid={centroid}
+                    pixelsPerMeter={pixelsPerMeter!}
+                    imageWidth={imageWidth!}
+                    planeWidth={planeWidth}
+                    color={polygon.color}
+                  />
+                )
+              })
+            })()}
             {/* Internal lines */}
             {polygon.lines?.map(([startIdx, endIdx], lineIndex) => (
               <Line
