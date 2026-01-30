@@ -53,6 +53,7 @@ export interface Canvas3DProps {
   onPolygonsChange?: (polygons: Polygon[]) => void
   onBodiesChange?: (bodies: Body[]) => void
   onTimeOfDayChange?: (time: number) => void
+  onPixelsPerMeterChange?: (pixelsPerMeter: number) => void
 }
 
 const OUTLINE_HEIGHT = 0.01
@@ -369,11 +370,13 @@ interface ImagePlaneProps {
   textureUrl: string | null
   aspectRatio: number
   isAddingPolygon: boolean
+  isMeasuring: boolean
   receiveShadow: boolean
   onPlaneClick: (point: THREE.Vector3) => void
+  onMeasureClick: (point: THREE.Vector3) => void
 }
 
-function ImagePlane({ textureUrl, aspectRatio, isAddingPolygon, receiveShadow, onPlaneClick }: ImagePlaneProps) {
+function ImagePlane({ textureUrl, aspectRatio, isAddingPolygon, isMeasuring, receiveShadow, onPlaneClick, onMeasureClick }: ImagePlaneProps) {
   const meshRef = useRef<THREE.Mesh>(null)
   const texture = useMemo(
     () => (textureUrl ? new THREE.TextureLoader().load(textureUrl) : null),
@@ -385,13 +388,19 @@ function ImagePlane({ textureUrl, aspectRatio, isAddingPolygon, receiveShadow, o
 
   const handleClick = useCallback(
     (e: ThreeEvent<MouseEvent>) => {
-      if (!isAddingPolygon) return
-      e.stopPropagation()
-      const point = e.point.clone()
-      point.y = OUTLINE_HEIGHT
-      onPlaneClick(point)
+      if (isAddingPolygon) {
+        e.stopPropagation()
+        const point = e.point.clone()
+        point.y = OUTLINE_HEIGHT
+        onPlaneClick(point)
+      } else if (isMeasuring) {
+        e.stopPropagation()
+        const point = e.point.clone()
+        point.y = OUTLINE_HEIGHT
+        onMeasureClick(point)
+      }
     },
-    [isAddingPolygon, onPlaneClick]
+    [isAddingPolygon, isMeasuring, onPlaneClick, onMeasureClick]
   )
 
   if (!texture) return null
@@ -836,12 +845,15 @@ interface SceneProps {
   isAddingPolygon: boolean
   isAddingLine: boolean
   isAddingBody: boolean
+  isMeasuring: boolean
+  measurePoints: THREE.Vector3[]
   selectedLinePoints: { polygonId: string; pointIndex: number } | null
   polygons: Polygon[]
   bodies: Body[]
   currentPoints: THREE.Vector3[]
   currentColor: string
   onPlaneClick: (point: THREE.Vector3) => void
+  onMeasureClick: (point: THREE.Vector3) => void
   onPointDragStart: () => void
   onPointDrag: (polygonId: string, pointIndex: number, newPosition: THREE.Vector3) => void
   onPointDragEnd: () => void
@@ -870,12 +882,15 @@ function Scene({
   isAddingPolygon,
   isAddingLine,
   isAddingBody,
+  isMeasuring,
+  measurePoints,
   selectedLinePoints,
   polygons,
   bodies,
   currentPoints,
   currentColor,
   onPlaneClick,
+  onMeasureClick,
   onPointDragStart,
   onPointDrag,
   onPointDragEnd,
@@ -889,7 +904,7 @@ function Scene({
   isDraggingPoint,
   onCompassRotationChange,
 }: SceneProps) {
-  const orbitEnabled = !isAddingPolygon && !isAddingLine && !isAddingBody && !isDraggingPoint
+  const orbitEnabled = !isAddingPolygon && !isAddingLine && !isAddingBody && !isMeasuring && !isDraggingPoint
 
   // Ambient light intensity adjusts based on time of day
   const ambientIntensity = useMemo(() => {
@@ -910,9 +925,29 @@ function Scene({
         textureUrl={imageUrl}
         aspectRatio={aspectRatio}
         isAddingPolygon={isAddingPolygon}
+        isMeasuring={isMeasuring}
         receiveShadow={shadows}
         onPlaneClick={onPlaneClick}
+        onMeasureClick={onMeasureClick}
       />
+      {/* Measurement line */}
+      {measurePoints.length >= 1 && (
+        <>
+          {measurePoints.map((point, i) => (
+            <mesh key={`measure-point-${i}`} position={point}>
+              <sphereGeometry args={[POINT_SIZE, 16, 16]} />
+              <meshBasicMaterial color="#ffaa00" />
+            </mesh>
+          ))}
+          {measurePoints.length === 2 && (
+            <Line
+              points={measurePoints}
+              color="#ffaa00"
+              lineWidth={3}
+            />
+          )}
+        </>
+      )}
       <BuildingBodies
         bodies={bodies}
         isAddingBody={isAddingBody}
@@ -1007,7 +1042,24 @@ const IconRedo = () => (
   </svg>
 )
 
-type Tool = 'select' | 'polygon' | 'line' | 'body'
+const IconMeasure = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <rect x="3" y="3" width="7" height="7" />
+    <rect x="14" y="3" width="7" height="7" />
+    <rect x="3" y="14" width="7" height="7" />
+    <rect x="14" y="14" width="7" height="7" />
+    <circle cx="12" cy="12" r="2" fill="currentColor" />
+  </svg>
+)
+
+const IconCopy = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+    <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+  </svg>
+)
+
+type Tool = 'select' | 'polygon' | 'line' | 'body' | 'measure'
 
 export function Canvas3D({
   width = '100%',
@@ -1031,9 +1083,11 @@ export function Canvas3D({
   onPolygonsChange,
   onBodiesChange,
   onTimeOfDayChange,
+  onPixelsPerMeterChange: _onPixelsPerMeterChange,
 }: Canvas3DProps) {
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [aspectRatio, setAspectRatio] = useState(1)
+  const [imageWidth, setImageWidth] = useState<number | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [activeTool, setActiveTool] = useState<Tool>('select')
   const [selectedLinePoints, setSelectedLinePoints] = useState<{
@@ -1042,6 +1096,23 @@ export function Canvas3D({
   } | null>(null)
   const [internalPolygons, setInternalPolygons] = useState<Polygon[]>([])
   const [internalBodies, setInternalBodies] = useState<Body[]>([])
+  const [measurePoints, setMeasurePoints] = useState<THREE.Vector3[]>([])
+  const [knownLength, setKnownLength] = useState<number>(4.5) // default car length
+  const [copyFeedback, setCopyFeedback] = useState(false)
+
+  // Dynamic calculation of pixels per meter
+  const calculatedPixelsPerMeter = useMemo(() => {
+    if (measurePoints.length !== 2 || !imageWidth || knownLength <= 0) return null
+
+    // Calculate distance in Three.js units
+    const distanceInUnits = measurePoints[0].distanceTo(measurePoints[1])
+
+    // Convert to pixels: PLANE_WIDTH units = imageWidth pixels
+    const distanceInPixels = distanceInUnits * (imageWidth / PLANE_WIDTH)
+
+    // Calculate pixels per meter
+    return distanceInPixels / knownLength
+  }, [measurePoints, imageWidth, knownLength])
   const [currentPoints, setCurrentPoints] = useState<THREE.Vector3[]>([])
   const [isDraggingPoint, setIsDraggingPoint] = useState(false)
   const [compassRotation, setCompassRotation] = useState(0)
@@ -1142,6 +1213,7 @@ export function Canvas3D({
   const isAddingPolygon = activeTool === 'polygon'
   const isAddingLine = activeTool === 'line'
   const isAddingBody = activeTool === 'body'
+  const isMeasuring = activeTool === 'measure'
 
   const currentColor = outlineColor || COLORS[polygons.length % COLORS.length]
 
@@ -1153,6 +1225,7 @@ export function Canvas3D({
       const img = new Image()
       img.onload = () => {
         setAspectRatio(img.width / img.height)
+        setImageWidth(img.width)
         setImageUrl(url)
         onImageLoad?.(file)
         onImageDimensionsChange?.(img.width, img.height)
@@ -1304,6 +1377,9 @@ export function Canvas3D({
     if (activeTool === 'polygon' && currentPoints.length > 0) {
       setCurrentPoints([])
     }
+    if (activeTool === 'measure') {
+      setMeasurePoints([])
+    }
     setSelectedLinePoints(null)
     setActiveTool(tool)
   }, [activeTool, currentPoints.length])
@@ -1314,6 +1390,9 @@ export function Canvas3D({
       if (e.key === 'Escape') {
         if (activeTool === 'polygon' && currentPoints.length > 0) {
           setCurrentPoints([])
+        }
+        if (activeTool === 'measure') {
+          setMeasurePoints([])
         }
         setSelectedLinePoints(null)
         setActiveTool('select')
@@ -1399,6 +1478,32 @@ export function Canvas3D({
     [bodies, setBodies]
   )
 
+  const handleMeasureClick = useCallback(
+    (point: THREE.Vector3) => {
+      if (measurePoints.length < 2) {
+        setMeasurePoints((prev) => [...prev, point])
+      } else {
+        // Reset and start new measurement
+        setMeasurePoints([point])
+      }
+    },
+    [measurePoints.length]
+  )
+
+  const handleCopyPixelsPerMeter = useCallback(() => {
+    if (calculatedPixelsPerMeter === null) return
+
+    const value = calculatedPixelsPerMeter.toFixed(2)
+    navigator.clipboard.writeText(value).then(() => {
+      setCopyFeedback(true)
+      setTimeout(() => setCopyFeedback(false), 1500)
+    })
+  }, [calculatedPixelsPerMeter])
+
+  const handleClearMeasurement = useCallback(() => {
+    setMeasurePoints([])
+  }, [])
+
   return (
     <div
       className={`canvas3d-container ${isDragging ? 'canvas3d-dragging' : ''}`}
@@ -1438,12 +1543,15 @@ export function Canvas3D({
           isAddingPolygon={isAddingPolygon}
           isAddingLine={isAddingLine}
           isAddingBody={isAddingBody}
+          isMeasuring={isMeasuring}
+          measurePoints={measurePoints}
           selectedLinePoints={selectedLinePoints}
           polygons={polygons}
           bodies={bodies}
           currentPoints={currentPoints}
           currentColor={currentColor}
           onPlaneClick={handlePlaneClick}
+          onMeasureClick={handleMeasureClick}
           onPointDragStart={handlePointDragStart}
           onPointDrag={handlePointDrag}
           onPointDragEnd={handlePointDragEnd}
@@ -1460,38 +1568,39 @@ export function Canvas3D({
       </Canvas>
 
       {imageUrl && (
-        <div className="canvas3d-compass">
-          <div
-            className="canvas3d-compass-rose"
-            style={{ transform: `rotate(${compassRotation}deg)` }}
-          >
-            <div className="canvas3d-compass-n">N</div>
-            <div className="canvas3d-compass-e">E</div>
-            <div className="canvas3d-compass-s">S</div>
-            <div className="canvas3d-compass-w">W</div>
-            <div className="canvas3d-compass-needle" />
+        <div className="canvas3d-top-right">
+          {showTimeControl && (
+            <div className="canvas3d-time-control">
+              <div className="canvas3d-time-icon">
+                <IconSun />
+              </div>
+              <input
+                type="range"
+                className="canvas3d-time-slider"
+                min="0"
+                max="24"
+                step="0.5"
+                value={timeOfDay}
+                onChange={(e) => handleTimeOfDayChange(parseFloat(e.target.value))}
+                title={`Time: ${Math.floor(timeOfDay)}:${String(Math.round((timeOfDay % 1) * 60)).padStart(2, '0')}`}
+              />
+              <span className="canvas3d-time-label">
+                {Math.floor(timeOfDay)}:{String(Math.round((timeOfDay % 1) * 60)).padStart(2, '0')}
+              </span>
+            </div>
+          )}
+          <div className="canvas3d-compass">
+            <div
+              className="canvas3d-compass-rose"
+              style={{ transform: `rotate(${compassRotation}deg)` }}
+            >
+              <div className="canvas3d-compass-n">N</div>
+              <div className="canvas3d-compass-e">E</div>
+              <div className="canvas3d-compass-s">S</div>
+              <div className="canvas3d-compass-w">W</div>
+              <div className="canvas3d-compass-needle" />
+            </div>
           </div>
-        </div>
-      )}
-
-      {imageUrl && showTimeControl && (
-        <div className="canvas3d-time-control">
-          <div className="canvas3d-time-icon">
-            <IconSun />
-          </div>
-          <input
-            type="range"
-            className="canvas3d-time-slider"
-            min="0"
-            max="24"
-            step="0.5"
-            value={timeOfDay}
-            onChange={(e) => handleTimeOfDayChange(parseFloat(e.target.value))}
-            title={`Time: ${Math.floor(timeOfDay)}:${String(Math.round((timeOfDay % 1) * 60)).padStart(2, '0')}`}
-          />
-          <span className="canvas3d-time-label">
-            {Math.floor(timeOfDay)}:{String(Math.round((timeOfDay % 1) * 60)).padStart(2, '0')}
-          </span>
         </div>
       )}
 
@@ -1530,6 +1639,14 @@ export function Canvas3D({
           >
             <IconBody />
             <span className="canvas3d-tool-tooltip">Add Body (B)</span>
+          </button>
+          <button
+            className={`canvas3d-tool ${activeTool === 'measure' ? 'canvas3d-tool--active' : ''}`}
+            onClick={() => handleSelectTool('measure')}
+            title="Calculate pixels per meter"
+          >
+            <IconMeasure />
+            <span className="canvas3d-tool-tooltip">Pixels/Meter (M)</span>
           </button>
 
           {historyContext && (
@@ -1596,6 +1713,64 @@ export function Canvas3D({
           Click on a polygon to create a 3D body • Right-click body to delete
         </div>
       )}
+
+      {isMeasuring && (
+        <div className="canvas3d-status">
+          {measurePoints.length === 0
+            ? 'Click to place first point on a known object'
+            : measurePoints.length === 1
+              ? 'Click to place second point'
+              : 'Measurement complete • Adjust known length below'}
+        </div>
+      )}
+
+      {isMeasuring && measurePoints.length === 2 && (
+        <div className="canvas3d-measure-panel">
+          <div className="canvas3d-measure-row">
+            <label className="canvas3d-measure-label">Known length</label>
+            <div className="canvas3d-measure-input-group">
+              <input
+                type="number"
+                className="canvas3d-measure-input"
+                min="0.1"
+                step="0.1"
+                value={knownLength}
+                onChange={(e) => setKnownLength(parseFloat(e.target.value) || 0)}
+              />
+              <span className="canvas3d-measure-unit">m</span>
+            </div>
+          </div>
+          {calculatedPixelsPerMeter !== null && (
+            <div className="canvas3d-measure-row">
+              <label className="canvas3d-measure-label">Pixels/Meter</label>
+              <div className="canvas3d-measure-input-group">
+                <input
+                  type="text"
+                  className="canvas3d-measure-input canvas3d-measure-input--readonly"
+                  value={copyFeedback ? 'Copied!' : calculatedPixelsPerMeter.toFixed(2)}
+                  readOnly
+                />
+                <button
+                  className="canvas3d-measure-copy"
+                  onClick={handleCopyPixelsPerMeter}
+                  title="Copy to clipboard"
+                >
+                  <IconCopy />
+                </button>
+              </div>
+            </div>
+          )}
+          <div className="canvas3d-measure-actions">
+            <button
+              className="canvas3d-action-btn"
+              onClick={handleClearMeasurement}
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }

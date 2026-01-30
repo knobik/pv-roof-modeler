@@ -53,6 +53,8 @@ export interface PVRoofModelerProps {
   onSelectionChange?: (polygonId: string | null) => void
   /** Callback when time of day changes */
   onTimeOfDayChange?: (time: number) => void
+  /** Callback when pixels per meter is calculated via measurement tool */
+  onPixelsPerMeterChange?: (pixelsPerMeter: number) => void
 }
 
 interface PVRoofModelerInnerProps extends PVRoofModelerProps {
@@ -83,6 +85,7 @@ function PVRoofModelerInner({
   onImageLoad,
   onSelectionChange,
   onTimeOfDayChange,
+  onPixelsPerMeterChange,
   internalHistory,
 }: PVRoofModelerInnerProps) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -385,6 +388,7 @@ function PVRoofModelerInner({
           onBodiesChange={handleBodiesChange}
           onImageLoad={onImageLoad}
           onImageDimensionsChange={handleImageDimensionsChange}
+          onPixelsPerMeterChange={onPixelsPerMeterChange}
         />
       </div>
       {sidebarPosition === 'right' && sidebar}
