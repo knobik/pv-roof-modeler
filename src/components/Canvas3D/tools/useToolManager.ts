@@ -6,13 +6,13 @@ import { useSelectTool, type SelectToolExtended } from './SelectTool/useSelectTo
 import { usePolygonTool, type PolygonToolExtended } from './PolygonTool/usePolygonTool'
 import { useLineTool } from './LineTool/useLineTool'
 import { useBodyTool, type BodyToolExtended } from './BodyTool/useBodyTool'
-import { useMeasureTool, type MeasureToolExtended } from './MeasureTool/useMeasureTool'
+import { useCalibrationTool, type CalibrationToolExtended } from './CalibrationTool/useCalibrationTool'
 import { useToolContext } from '../context/ToolContext'
 import { useCanvasContext } from '../context/CanvasContext'
 
 export type { PolygonToolExtended } from './PolygonTool/usePolygonTool'
 export type { BodyToolExtended } from './BodyTool/useBodyTool'
-export type { MeasureToolExtended } from './MeasureTool/useMeasureTool'
+export type { CalibrationToolExtended } from './CalibrationTool/useCalibrationTool'
 export type { SelectToolExtended } from './SelectTool/useSelectTool'
 
 export interface ToolManagerHandlers extends ToolActions {
@@ -37,7 +37,7 @@ export interface ToolManagerReturn {
   // Tool-specific data exposed for Scene
   currentPoints: THREE.Vector3[]
   currentColor: string
-  measurePoints: THREE.Vector3[]
+  calibrationPoints: THREE.Vector3[]
   selectedLinePoints: { polygonId: string; pointIndex: number } | null
 
   // Individual tool instances for direct access
@@ -45,7 +45,7 @@ export interface ToolManagerReturn {
   polygonTool: PolygonToolExtended
   lineTool: ToolHookReturn
   bodyTool: BodyToolExtended
-  measureTool: MeasureToolExtended
+  calibrationTool: CalibrationToolExtended
 }
 
 export function useToolManager(): ToolManagerReturn {
@@ -56,7 +56,7 @@ export function useToolManager(): ToolManagerReturn {
     activeTool,
     setActiveTool: setActiveToolRaw,
     currentPoints,
-    measurePoints,
+    calibrationPoints,
     selectedLinePoints,
   } = toolContext
 
@@ -67,7 +67,7 @@ export function useToolManager(): ToolManagerReturn {
   const polygonTool = usePolygonTool()
   const lineTool = useLineTool()
   const bodyTool = useBodyTool()
-  const measureTool = useMeasureTool()
+  const calibrationTool = useCalibrationTool()
 
   // Tool lookup by name
   const tools = useMemo(() => ({
@@ -75,8 +75,8 @@ export function useToolManager(): ToolManagerReturn {
     polygon: polygonTool,
     line: lineTool,
     body: bodyTool,
-    measure: measureTool,
-  }), [selectTool, polygonTool, lineTool, bodyTool, measureTool])
+    calibration: calibrationTool,
+  }), [selectTool, polygonTool, lineTool, bodyTool, calibrationTool])
 
   const getToolByName = useCallback((name: ToolName): ToolHookReturn<ToolState> => {
     return tools[name]
@@ -106,12 +106,12 @@ export function useToolManager(): ToolManagerReturn {
     onActivate: () => currentTool.actions.onActivate?.(),
     onDeactivate: () => currentTool.actions.onDeactivate?.(),
 
-    // Plane click - polygon and measure tools
+    // Plane click - polygon and calibration tools
     onPlaneClick: (point: THREE.Vector3) => {
       if (activeTool === 'polygon') {
         polygonTool.actions.onPlaneClick?.(point)
-      } else if (activeTool === 'measure') {
-        measureTool.actions.onPlaneClick?.(point)
+      } else if (activeTool === 'calibration') {
+        calibrationTool.actions.onPlaneClick?.(point)
       }
     },
 
@@ -181,7 +181,7 @@ export function useToolManager(): ToolManagerReturn {
     polygonTool,
     lineTool,
     bodyTool,
-    measureTool,
+    calibrationTool,
     setActiveTool,
   ])
 
@@ -197,7 +197,7 @@ export function useToolManager(): ToolManagerReturn {
   }, [handlers])
 
   // Computed flags
-  const isDrawing = activeTool === 'polygon' || activeTool === 'measure'
+  const isDrawing = activeTool === 'polygon' || activeTool === 'calibration'
   const orbitEnabled = activeTool === 'select' && !isDraggingPoint
 
   // Get current color from polygon tool state (now properly typed)
@@ -212,12 +212,12 @@ export function useToolManager(): ToolManagerReturn {
     orbitEnabled,
     currentPoints,
     currentColor,
-    measurePoints,
+    calibrationPoints,
     selectedLinePoints,
     selectTool,
     polygonTool,
     lineTool,
     bodyTool,
-    measureTool,
+    calibrationTool,
   }
 }

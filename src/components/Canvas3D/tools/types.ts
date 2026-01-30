@@ -41,8 +41,8 @@ export interface BodyToolState {
   // Body tool has no exposed state
 }
 
-export interface MeasureToolState {
-  measurePoints: THREE.Vector3[]
+export interface CalibrationToolState {
+  calibrationPoints: THREE.Vector3[]
   knownLength: number
   calculatedPixelsPerMeter: number | null
   copyFeedback: boolean
@@ -55,7 +55,7 @@ export type ToolState =
   | PolygonToolState
   | LineToolState
   | BodyToolState
-  | MeasureToolState
+  | CalibrationToolState
 
 export interface ToolRender {
   statusText: string | null

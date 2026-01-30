@@ -7,8 +7,8 @@ export type { StatusBarProps } from './StatusBar'
 export { PolygonActions } from './PolygonActions'
 export type { PolygonActionsProps } from './PolygonActions'
 
-export { MeasurePanel } from './MeasurePanel'
-export type { MeasurePanelProps } from './MeasurePanel'
+export { CalibrationPanel } from './CalibrationPanel'
+export type { CalibrationPanelProps } from './CalibrationPanel'
 
 export { TimeControl } from './TimeControl'
 export type { TimeControlProps } from './TimeControl'

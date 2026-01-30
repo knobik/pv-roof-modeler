@@ -180,8 +180,8 @@
   background: rgba(239, 68, 68, 1);
 }
 
-/* Measurement panel */
-.canvas3d-measure-panel {
+/* Calibration panel */
+.canvas3d-calibration-panel {
   position: absolute;
   bottom: 3.5rem;
   left: 50%;
@@ -196,26 +196,26 @@
   gap: 0.5rem;
 }
 
-.canvas3d-measure-row {
+.canvas3d-calibration-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
 }
 
-.canvas3d-measure-label {
+.canvas3d-calibration-label {
   color: rgba(255, 255, 255, 0.7);
   font-size: 0.8125rem;
   white-space: nowrap;
 }
 
-.canvas3d-measure-input-group {
+.canvas3d-calibration-input-group {
   display: flex;
   align-items: center;
   gap: 0;
 }
 
-.canvas3d-measure-input {
+.canvas3d-calibration-input {
   width: 70px;
   padding: 0.4rem 0.5rem;
   background: rgba(0, 0, 0, 0.4);
@@ -227,18 +227,18 @@
   text-align: right;
 }
 
-.canvas3d-measure-input:focus {
+.canvas3d-calibration-input:focus {
   outline: none;
   border-color: #3b82f6;
 }
 
-.canvas3d-measure-input--readonly {
+.canvas3d-calibration-input--readonly {
   background: rgba(59, 130, 246, 0.15);
   border-color: rgba(59, 130, 246, 0.3);
   cursor: default;
 }
 
-.canvas3d-measure-unit {
+.canvas3d-calibration-unit {
   padding: 0.4rem 0.5rem;
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.15);
@@ -248,11 +248,11 @@
   font-size: 0.75rem;
 }
 
-.canvas3d-measure-input:has(+ .canvas3d-measure-unit) {
+.canvas3d-calibration-input:has(+ .canvas3d-calibration-unit) {
   border-radius: 4px 0 0 4px;
 }
 
-.canvas3d-measure-copy {
+.canvas3d-calibration-copy {
   width: 28px;
   height: 28px;
   display: flex;
@@ -267,21 +267,21 @@
   transition: all 0.15s;
 }
 
-.canvas3d-measure-copy:hover {
+.canvas3d-calibration-copy:hover {
   background: rgba(255, 255, 255, 0.2);
   color: rgba(255, 255, 255, 0.9);
 }
 
-.canvas3d-measure-copy svg {
+.canvas3d-calibration-copy svg {
   width: 14px;
   height: 14px;
 }
 
-.canvas3d-measure-input:has(+ .canvas3d-measure-copy) {
+.canvas3d-calibration-input:has(+ .canvas3d-calibration-copy) {
   border-radius: 4px 0 0 4px;
 }
 
-.canvas3d-measure-actions {
+.canvas3d-calibration-actions {
   display: flex;
   gap: 0.5rem;
   justify-content: flex-end;

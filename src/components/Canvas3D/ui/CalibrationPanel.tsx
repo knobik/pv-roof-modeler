@@ -1,6 +1,6 @@
 import { IconCopy } from './Icons'
 
-export interface MeasurePanelProps {
+export interface CalibrationPanelProps {
   show: boolean
   knownLength: number
   calculatedPixelsPerMeter: number | null
@@ -10,7 +10,7 @@ export interface MeasurePanelProps {
   onClear: () => void
 }
 
-export function MeasurePanel({
+export function CalibrationPanel({
   show,
   knownLength,
   calculatedPixelsPerMeter,
@@ -18,37 +18,37 @@ export function MeasurePanel({
   onKnownLengthChange,
   onCopy,
   onClear,
-}: MeasurePanelProps) {
+}: CalibrationPanelProps) {
   if (!show) return null
 
   return (
-    <div className="canvas3d-measure-panel">
-      <div className="canvas3d-measure-row">
-        <label className="canvas3d-measure-label">Known length</label>
-        <div className="canvas3d-measure-input-group">
+    <div className="canvas3d-calibration-panel">
+      <div className="canvas3d-calibration-row">
+        <label className="canvas3d-calibration-label">Known length</label>
+        <div className="canvas3d-calibration-input-group">
           <input
             type="number"
-            className="canvas3d-measure-input"
+            className="canvas3d-calibration-input"
             min="0.1"
             step="0.1"
             value={knownLength}
             onChange={(e) => onKnownLengthChange(parseFloat(e.target.value) || 0)}
           />
-          <span className="canvas3d-measure-unit">m</span>
+          <span className="canvas3d-calibration-unit">m</span>
         </div>
       </div>
       {calculatedPixelsPerMeter !== null && (
-        <div className="canvas3d-measure-row">
-          <label className="canvas3d-measure-label">Pixels/Meter</label>
-          <div className="canvas3d-measure-input-group">
+        <div className="canvas3d-calibration-row">
+          <label className="canvas3d-calibration-label">Pixels/Meter</label>
+          <div className="canvas3d-calibration-input-group">
             <input
               type="text"
-              className="canvas3d-measure-input canvas3d-measure-input--readonly"
+              className="canvas3d-calibration-input canvas3d-calibration-input--readonly"
               value={copyFeedback ? 'Copied!' : calculatedPixelsPerMeter.toFixed(2)}
               readOnly
             />
             <button
-              className="canvas3d-measure-copy"
+              className="canvas3d-calibration-copy"
               onClick={onCopy}
               title="Copy to clipboard"
             >
@@ -57,7 +57,7 @@ export function MeasurePanel({
           </div>
         </div>
       )}
-      <div className="canvas3d-measure-actions">
+      <div className="canvas3d-calibration-actions">
         <button
           className="canvas3d-action-btn"
           onClick={onClear}

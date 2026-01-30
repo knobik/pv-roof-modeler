@@ -24,15 +24,15 @@ export interface SceneProps {
   isAddingPolygon: boolean
   isAddingLine: boolean
   isAddingBody: boolean
-  isMeasuring: boolean
-  measurePoints: THREE.Vector3[]
+  isCalibrating: boolean
+  calibrationPoints: THREE.Vector3[]
   selectedLinePoints: { polygonId: string; pointIndex: number } | null
   polygons: Polygon[]
   bodies: Body[]
   currentPoints: THREE.Vector3[]
   currentColor: string
   onPlaneClick: (point: THREE.Vector3) => void
-  onMeasureClick: (point: THREE.Vector3) => void
+  onCalibrationClick: (point: THREE.Vector3) => void
   onPointDragStart: () => void
   onPointDrag: (polygonId: string, pointIndex: number, newPosition: THREE.Vector3) => void
   onPointDragEnd: () => void
@@ -61,15 +61,15 @@ export function Scene({
   isAddingPolygon,
   isAddingLine,
   isAddingBody,
-  isMeasuring,
-  measurePoints,
+  isCalibrating,
+  calibrationPoints,
   selectedLinePoints,
   polygons,
   bodies,
   currentPoints,
   currentColor,
   onPlaneClick,
-  onMeasureClick,
+  onCalibrationClick,
   onPointDragStart,
   onPointDrag,
   onPointDragEnd,
@@ -83,7 +83,7 @@ export function Scene({
   isDraggingPoint,
   onCompassRotationChange,
 }: SceneProps) {
-  const orbitEnabled = !isAddingPolygon && !isAddingLine && !isAddingBody && !isMeasuring && !isDraggingPoint
+  const orbitEnabled = !isAddingPolygon && !isAddingLine && !isAddingBody && !isCalibrating && !isDraggingPoint
 
   // Ambient light intensity adjusts based on time of day
   const ambientIntensity = useMemo(() => {
@@ -104,24 +104,24 @@ export function Scene({
         textureUrl={imageUrl}
         aspectRatio={aspectRatio}
         isAddingPolygon={isAddingPolygon}
-        isMeasuring={isMeasuring}
+        isCalibrating={isCalibrating}
         receiveShadow={shadows}
         onPlaneClick={onPlaneClick}
-        onMeasureClick={onMeasureClick}
+        onCalibrationClick={onCalibrationClick}
       />
-      {/* Measurement line */}
-      {measurePoints.length >= 1 && (
+      {/* Calibration line */}
+      {calibrationPoints.length >= 1 && (
         <>
-          {measurePoints.map((point, i) => (
+          {calibrationPoints.map((point, i) => (
             <ScaledPoint
-              key={`measure-point-${i}`}
+              key={`calibration-point-${i}`}
               position={point}
               color="#ffaa00"
             />
           ))}
-          {measurePoints.length === 2 && (
+          {calibrationPoints.length === 2 && (
             <Line
-              points={measurePoints}
+              points={calibrationPoints}
               color="#ffaa00"
               lineWidth={3}
             />

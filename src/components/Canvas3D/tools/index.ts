@@ -5,8 +5,8 @@ export type { PolygonToolExtended } from './PolygonTool/usePolygonTool'
 export { useLineTool } from './LineTool'
 export { useBodyTool } from './BodyTool'
 export type { BodyToolExtended } from './BodyTool/useBodyTool'
-export { useMeasureTool } from './MeasureTool'
-export type { MeasureToolExtended } from './MeasureTool/useMeasureTool'
+export { useCalibrationTool } from './CalibrationTool'
+export type { CalibrationToolExtended } from './CalibrationTool/useCalibrationTool'
 export { useToolManager } from './useToolManager'
 export type { ToolManagerReturn, ToolManagerHandlers } from './useToolManager'
 export type {
@@ -18,5 +18,5 @@ export type {
   PolygonToolState,
   LineToolState,
   BodyToolState,
-  MeasureToolState,
+  CalibrationToolState,
 } from './types'

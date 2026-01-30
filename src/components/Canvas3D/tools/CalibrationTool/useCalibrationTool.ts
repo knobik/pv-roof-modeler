@@ -1,21 +1,21 @@
 import { useCallback, useMemo } from 'react'
 import * as THREE from 'three'
-import type { ToolHookReturn, MeasureToolState } from '../types'
+import type { ToolHookReturn, CalibrationToolState } from '../types'
 import { PLANE_WIDTH } from '../../constants'
 import { useCanvasContext } from '../../context/CanvasContext'
 import { useToolContext } from '../../context/ToolContext'
 
-export interface MeasureToolExtended extends ToolHookReturn<MeasureToolState> {
+export interface CalibrationToolExtended extends ToolHookReturn<CalibrationToolState> {
   setKnownLength: (length: number) => void
   handleCopyPixelsPerMeter: () => void
-  handleClearMeasurement: () => void
+  handleClearCalibration: () => void
 }
 
-export function useMeasureTool(): MeasureToolExtended {
+export function useCalibrationTool(): CalibrationToolExtended {
   const { imageWidth } = useCanvasContext()
   const {
-    measurePoints,
-    setMeasurePoints,
+    calibrationPoints,
+    setCalibrationPoints,
     knownLength,
     setKnownLength,
     copyFeedback,
@@ -24,28 +24,28 @@ export function useMeasureTool(): MeasureToolExtended {
 
   // Dynamic calculation of pixels per meter
   const calculatedPixelsPerMeter = useMemo(() => {
-    if (measurePoints.length !== 2 || !imageWidth || knownLength <= 0) return null
+    if (calibrationPoints.length !== 2 || !imageWidth || knownLength <= 0) return null
 
     // Calculate distance in Three.js units
-    const distanceInUnits = measurePoints[0].distanceTo(measurePoints[1])
+    const distanceInUnits = calibrationPoints[0].distanceTo(calibrationPoints[1])
 
     // Convert to pixels: PLANE_WIDTH units = imageWidth pixels
     const distanceInPixels = distanceInUnits * (imageWidth / PLANE_WIDTH)
 
     // Calculate pixels per meter
     return distanceInPixels / knownLength
-  }, [measurePoints, imageWidth, knownLength])
+  }, [calibrationPoints, imageWidth, knownLength])
 
   const onPlaneClick = useCallback(
     (point: THREE.Vector3) => {
-      if (measurePoints.length < 2) {
-        setMeasurePoints((prev) => [...prev, point])
+      if (calibrationPoints.length < 2) {
+        setCalibrationPoints((prev) => [...prev, point])
       } else {
-        // Reset and start new measurement
-        setMeasurePoints([point])
+        // Reset and start new calibration
+        setCalibrationPoints([point])
       }
     },
-    [measurePoints.length, setMeasurePoints]
+    [calibrationPoints.length, setCalibrationPoints]
   )
 
   const handleCopyPixelsPerMeter = useCallback(() => {
@@ -58,35 +58,35 @@ export function useMeasureTool(): MeasureToolExtended {
     })
   }, [calculatedPixelsPerMeter, setCopyFeedback])
 
-  const handleClearMeasurement = useCallback(() => {
-    setMeasurePoints([])
-  }, [setMeasurePoints])
+  const handleClearCalibration = useCallback(() => {
+    setCalibrationPoints([])
+  }, [setCalibrationPoints])
 
   const onCancel = useCallback(() => {
-    setMeasurePoints([])
-  }, [setMeasurePoints])
+    setCalibrationPoints([])
+  }, [setCalibrationPoints])
 
   const onDeactivate = useCallback(() => {
-    setMeasurePoints([])
-  }, [setMeasurePoints])
+    setCalibrationPoints([])
+  }, [setCalibrationPoints])
 
   const getStatusText = () => {
-    if (measurePoints.length === 0) {
+    if (calibrationPoints.length === 0) {
       return 'Click to place first point on a known object'
     }
-    if (measurePoints.length === 1) {
+    if (calibrationPoints.length === 1) {
       return 'Click to place second point'
     }
-    return 'Measurement complete • Adjust known length below'
+    return 'Calibration complete • Adjust known length below'
   }
 
   return {
     state: {
-      measurePoints,
+      calibrationPoints,
       knownLength,
       calculatedPixelsPerMeter,
       copyFeedback,
-      showPanel: measurePoints.length === 2,
+      showPanel: calibrationPoints.length === 2,
     },
     actions: {
       onPlaneClick,
@@ -98,6 +98,6 @@ export function useMeasureTool(): MeasureToolExtended {
     },
     setKnownLength: (length: number) => setKnownLength(length),
     handleCopyPixelsPerMeter,
-    handleClearMeasurement,
+    handleClearCalibration,
   }
 }

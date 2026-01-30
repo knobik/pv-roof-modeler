@@ -4,7 +4,7 @@ import { OrbitControls } from '@react-three/drei'
 import type { HistoryContextValue } from '../../hooks/useHistory'
 import type { Polygon, Body } from './types'
 import { Scene } from './scene'
-import { Toolbox, StatusBar, PolygonActions, MeasurePanel, TimeControl, CompassDisplay } from './ui'
+import { Toolbox, StatusBar, PolygonActions, CalibrationPanel, TimeControl, CompassDisplay } from './ui'
 import { CanvasProvider, useCanvasContext, ToolProvider } from './context'
 import { useToolManager } from './tools'
 import './Canvas3D.css'
@@ -111,7 +111,7 @@ function Canvas3DInner({
   const isAddingPolygon = toolManager.activeTool === 'polygon'
   const isAddingLine = toolManager.activeTool === 'line'
   const isAddingBody = toolManager.activeTool === 'body'
-  const isMeasuring = toolManager.activeTool === 'measure'
+  const isCalibrating = toolManager.activeTool === 'calibration'
 
   // Local UI state
   const [isDragging, setIsDragging] = useState(false)
@@ -234,15 +234,15 @@ function Canvas3DInner({
           isAddingPolygon={isAddingPolygon}
           isAddingLine={isAddingLine}
           isAddingBody={isAddingBody}
-          isMeasuring={isMeasuring}
-          measurePoints={toolManager.measurePoints}
+          isCalibrating={isCalibrating}
+          calibrationPoints={toolManager.calibrationPoints}
           selectedLinePoints={toolManager.selectedLinePoints}
           polygons={polygons}
           bodies={bodies}
           currentPoints={toolManager.currentPoints}
           currentColor={currentColor}
           onPlaneClick={handlers.onPlaneClick!}
-          onMeasureClick={handlers.onPlaneClick!}
+          onCalibrationClick={handlers.onPlaneClick!}
           onPointDragStart={handlers.onPointDragStart!}
           onPointDrag={handlers.onPointDrag!}
           onPointDragEnd={handlers.onPointDragEnd!}
@@ -291,15 +291,15 @@ function Canvas3DInner({
 
       <StatusBar text={toolManager.statusText} />
 
-      {isMeasuring && (
-        <MeasurePanel
-          show={toolManager.measurePoints.length === 2}
-          knownLength={toolManager.measureTool.state.knownLength}
-          calculatedPixelsPerMeter={toolManager.measureTool.state.calculatedPixelsPerMeter}
-          copyFeedback={toolManager.measureTool.state.copyFeedback}
-          onKnownLengthChange={toolManager.measureTool.setKnownLength}
-          onCopy={toolManager.measureTool.handleCopyPixelsPerMeter}
-          onClear={toolManager.measureTool.handleClearMeasurement}
+      {isCalibrating && (
+        <CalibrationPanel
+          show={toolManager.calibrationPoints.length === 2}
+          knownLength={toolManager.calibrationTool.state.knownLength}
+          calculatedPixelsPerMeter={toolManager.calibrationTool.state.calculatedPixelsPerMeter}
+          copyFeedback={toolManager.calibrationTool.state.copyFeedback}
+          onKnownLengthChange={toolManager.calibrationTool.setKnownLength}
+          onCopy={toolManager.calibrationTool.handleCopyPixelsPerMeter}
+          onClear={toolManager.calibrationTool.handleClearCalibration}
         />
       )}
     </div>
