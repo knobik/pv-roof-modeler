@@ -149,15 +149,20 @@ export function HistoryProvider({
     // Target state becomes current
     const targetState = redoStack[index]
 
-    // Current state plus states before target (0 to index-1) go to undo
+    // Redo array is in reverse chronological order of undos:
+    // - Lower indices = older undos = farther in future (chronologically after target)
+    // - Higher indices = newer undos = closer to current (chronologically between current and target)
+    //
+    // States AFTER target index (closer to current) go to undo in reversed order
+    // States BEFORE target index (farther in future) remain in redo
+    const statesBetweenCurrentAndTarget = redoStack.slice(index + 1).reverse()
     const statesToUndo = [
       cloneState(state),
-      ...redoStack.slice(0, index),
+      ...statesBetweenCurrentAndTarget,
     ]
 
-    // States after target remain in redo
     undoStackRef.current = [...undoStackRef.current, ...statesToUndo]
-    redoStackRef.current = redoStack.slice(index + 1)
+    redoStackRef.current = redoStack.slice(0, index)
 
     setState(targetState)
     forceUpdate({})

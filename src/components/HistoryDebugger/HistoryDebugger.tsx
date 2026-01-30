@@ -69,21 +69,18 @@ export function HistoryDebugger({
         )}
       </div>
       <div className="history-debugger-list" style={{ maxHeight }}>
-        {/* Redo stack (future states) - shown in reverse so most recent redo is at top */}
+        {/* Redo stack (future states) - furthest redo at top, closest to current at bottom */}
         {redoStack.length > 0 && (
           <div className="history-debugger-section">
             <div className="history-debugger-section-label">Redo</div>
-            {[...redoStack].reverse().map((s, i) => {
-              const actualIndex = redoStack.length - 1 - i
-              return (
-                <StatePreview
-                  key={`redo-${i}`}
-                  state={s}
-                  label={`+${redoStack.length - i}`}
-                  onClick={() => goToRedoState(actualIndex)}
-                />
-              )
-            })}
+            {redoStack.map((s, i) => (
+              <StatePreview
+                key={`redo-${i}`}
+                state={s}
+                label={`+${redoStack.length - i}`}
+                onClick={() => goToRedoState(i)}
+              />
+            ))}
           </div>
         )}
 
