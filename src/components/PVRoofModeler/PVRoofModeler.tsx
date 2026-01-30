@@ -29,6 +29,8 @@ export interface PVRoofModelerProps {
   longitude?: number
   /** Date for sun position calculation (default: current date) */
   date?: Date
+  /** Pixels per meter ratio for scaling calculations */
+  pixelsPerMeter?: number
   /** Width of the polygon list sidebar (default: 280) */
   sidebarWidth?: number | string
   /** Position of the sidebar (default: 'right') */
@@ -69,6 +71,7 @@ function PVRoofModelerInner({
   latitude,
   longitude,
   date,
+  pixelsPerMeter,
   sidebarWidth = 280,
   sidebarPosition = 'right',
   hideSidebar = false,
@@ -327,6 +330,7 @@ function PVRoofModelerInner({
           latitude={latitude}
           longitude={longitude}
           date={date}
+          pixelsPerMeter={pixelsPerMeter}
           historyContext={history || undefined}
           polygons={polygons}
           bodies={bodies}

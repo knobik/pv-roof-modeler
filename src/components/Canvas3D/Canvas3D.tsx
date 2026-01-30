@@ -42,6 +42,8 @@ export interface Canvas3DProps {
   longitude?: number
   /** Date for sun position calculation (default: current date) */
   date?: Date
+  /** Pixels per meter ratio for scaling calculations */
+  pixelsPerMeter?: number
   /** History context for undo/redo support */
   historyContext?: HistoryContextValue
   onImageLoad?: (file: File) => void

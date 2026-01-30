@@ -7,10 +7,12 @@ function ModelerWithDebugger({
   latitude,
   longitude,
   date,
+  pixelsPerMeter,
 }: {
   latitude: number
   longitude: number
   date: Date
+  pixelsPerMeter: number
 }) {
   const history = useHistoryOptional()
 
@@ -23,6 +25,7 @@ function ModelerWithDebugger({
           latitude={latitude}
           longitude={longitude}
           date={date}
+          pixelsPerMeter={pixelsPerMeter}
           historyContext={history || undefined}
         />
       </div>
@@ -40,6 +43,7 @@ export function App() {
     const now = new Date()
     return now.toISOString().split('T')[0]
   })
+  const [pixelsPerMeter, setPixelsPerMeter] = useState(25.5)
 
   return (
     <div className="playground">
@@ -82,12 +86,24 @@ export function App() {
               onChange={(e) => setDate(e.target.value)}
             />
           </div>
+          <div className="control-group">
+            <label htmlFor="pixelsPerMeter">Pixels/Meter</label>
+            <input
+              id="pixelsPerMeter"
+              type="number"
+              step="0.1"
+              min="0.1"
+              value={pixelsPerMeter}
+              onChange={(e) => setPixelsPerMeter(parseFloat(e.target.value) || 25.5)}
+            />
+          </div>
         </div>
         <HistoryProvider>
           <ModelerWithDebugger
             latitude={latitude}
             longitude={longitude}
             date={new Date(date)}
+            pixelsPerMeter={pixelsPerMeter}
           />
         </HistoryProvider>
       </section>
