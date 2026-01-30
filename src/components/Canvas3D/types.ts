@@ -17,4 +17,4 @@ export interface Body {
   visible?: boolean  // whether the body is visible in the editor (default: true)
 }
 
-export type ToolName = 'select' | 'polygon' | 'line' | 'body' | 'calibration'
+export type ToolName = 'select' | 'polygon' | 'line' | 'body' | 'calibration' | 'measurement'

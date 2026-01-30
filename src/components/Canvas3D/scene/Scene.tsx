@@ -25,7 +25,9 @@ export interface SceneProps {
   isAddingLine: boolean
   isAddingBody: boolean
   isCalibrating: boolean
+  isMeasuring: boolean
   calibrationPoints: THREE.Vector3[]
+  measurementPoints: THREE.Vector3[]
   selectedLinePoints: { polygonId: string; pointIndex: number } | null
   polygons: Polygon[]
   bodies: Body[]
@@ -36,6 +38,7 @@ export interface SceneProps {
   planeWidth: number
   onPlaneClick: (point: THREE.Vector3) => void
   onCalibrationClick: (point: THREE.Vector3) => void
+  onMeasurementClick: (point: THREE.Vector3) => void
   onPointDragStart: () => void
   onPointDrag: (polygonId: string, pointIndex: number, newPosition: THREE.Vector3) => void
   onPointDragEnd: () => void
@@ -65,7 +68,9 @@ export function Scene({
   isAddingLine,
   isAddingBody,
   isCalibrating,
+  isMeasuring,
   calibrationPoints,
+  measurementPoints,
   selectedLinePoints,
   polygons,
   bodies,
@@ -76,6 +81,7 @@ export function Scene({
   planeWidth,
   onPlaneClick,
   onCalibrationClick,
+  onMeasurementClick,
   onPointDragStart,
   onPointDrag,
   onPointDragEnd,
@@ -89,7 +95,7 @@ export function Scene({
   isDraggingPoint,
   onCompassRotationChange,
 }: SceneProps) {
-  const orbitEnabled = !isAddingPolygon && !isAddingLine && !isAddingBody && !isCalibrating && !isDraggingPoint
+  const orbitEnabled = !isAddingPolygon && !isAddingLine && !isAddingBody && !isCalibrating && !isMeasuring && !isDraggingPoint
 
   // Ambient light intensity adjusts based on time of day
   const ambientIntensity = useMemo(() => {
@@ -111,9 +117,11 @@ export function Scene({
         aspectRatio={aspectRatio}
         isAddingPolygon={isAddingPolygon}
         isCalibrating={isCalibrating}
+        isMeasuring={isMeasuring}
         receiveShadow={shadows}
         onPlaneClick={onPlaneClick}
         onCalibrationClick={onCalibrationClick}
+        onMeasurementClick={onMeasurementClick}
       />
       {/* Calibration line */}
       {calibrationPoints.length >= 1 && (
@@ -133,6 +141,10 @@ export function Scene({
             />
           )}
         </>
+      )}
+      {/* Measurement line */}
+      {measurementPoints.length >= 1 && (
+        <MeasurementLine measurementPoints={measurementPoints} />
       )}
       <BuildingBodies
         bodies={bodies}
@@ -168,6 +180,31 @@ export function Scene({
         dampingFactor={0.05}
         enabled={orbitEnabled}
       />
+    </>
+  )
+}
+
+interface MeasurementLineProps {
+  measurementPoints: THREE.Vector3[]
+}
+
+function MeasurementLine({ measurementPoints }: MeasurementLineProps) {
+  return (
+    <>
+      {measurementPoints.map((point, i) => (
+        <ScaledPoint
+          key={`measurement-point-${i}`}
+          position={point}
+          color="#00aaff"
+        />
+      ))}
+      {measurementPoints.length === 2 && (
+        <Line
+          points={measurementPoints}
+          color="#00aaff"
+          lineWidth={3}
+        />
+      )}
     </>
   )
 }

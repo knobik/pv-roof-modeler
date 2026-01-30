@@ -23,6 +23,12 @@ export interface ToolContextValue {
   copyFeedback: boolean
   setCopyFeedback: React.Dispatch<React.SetStateAction<boolean>>
 
+  // Measurement tool state
+  measurementPoints: THREE.Vector3[]
+  setMeasurementPoints: React.Dispatch<React.SetStateAction<THREE.Vector3[]>>
+  measurementCopyFeedback: boolean
+  setMeasurementCopyFeedback: React.Dispatch<React.SetStateAction<boolean>>
+
   // Tool switching helper
   handleSelectTool: (tool: ToolName) => void
 }
@@ -43,6 +49,8 @@ export function ToolProvider({ children }: ToolProviderProps) {
   const [calibrationPoints, setCalibrationPoints] = useState<THREE.Vector3[]>([])
   const [knownLength, setKnownLength] = useState<number>(4.5)
   const [copyFeedback, setCopyFeedback] = useState<boolean>(false)
+  const [measurementPoints, setMeasurementPoints] = useState<THREE.Vector3[]>([])
+  const [measurementCopyFeedback, setMeasurementCopyFeedback] = useState<boolean>(false)
 
   const handleSelectTool = useCallback((tool: ToolName) => {
     if (activeTool === 'polygon' && currentPoints.length > 0) {
@@ -50,6 +58,9 @@ export function ToolProvider({ children }: ToolProviderProps) {
     }
     if (activeTool === 'calibration') {
       setCalibrationPoints([])
+    }
+    if (activeTool === 'measurement') {
+      setMeasurementPoints([])
     }
     setSelectedLinePoints(null)
     setActiveTool(tool)
@@ -68,6 +79,10 @@ export function ToolProvider({ children }: ToolProviderProps) {
     setKnownLength,
     copyFeedback,
     setCopyFeedback,
+    measurementPoints,
+    setMeasurementPoints,
+    measurementCopyFeedback,
+    setMeasurementCopyFeedback,
     handleSelectTool,
   }), [
     activeTool,
@@ -76,6 +91,8 @@ export function ToolProvider({ children }: ToolProviderProps) {
     calibrationPoints,
     knownLength,
     copyFeedback,
+    measurementPoints,
+    measurementCopyFeedback,
     handleSelectTool,
   ])
 

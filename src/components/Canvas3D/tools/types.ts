@@ -49,6 +49,13 @@ export interface CalibrationToolState {
   showPanel: boolean
 }
 
+export interface MeasurementToolState {
+  measurementPoints: THREE.Vector3[]
+  measuredDistance: number | null
+  copyFeedback: boolean
+  showPanel: boolean
+}
+
 // Union of all tool states for generic use
 export type ToolState =
   | SelectToolState
@@ -56,6 +63,7 @@ export type ToolState =
   | LineToolState
   | BodyToolState
   | CalibrationToolState
+  | MeasurementToolState
 
 export interface ToolRender {
   statusText: string | null

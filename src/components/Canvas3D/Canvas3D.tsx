@@ -4,7 +4,7 @@ import { OrbitControls } from '@react-three/drei'
 import type { HistoryContextValue } from '../../hooks/useHistory'
 import type { Polygon, Body } from './types'
 import { Scene } from './scene'
-import { Toolbox, StatusBar, PolygonActions, CalibrationPanel, TimeControl, CompassDisplay } from './ui'
+import { Toolbox, StatusBar, PolygonActions, CalibrationPanel, MeasurementPanel, TimeControl, CompassDisplay } from './ui'
 import { CanvasProvider, useCanvasContext, ToolProvider } from './context'
 import { useToolManager } from './tools'
 import './Canvas3D.css'
@@ -115,6 +115,7 @@ function Canvas3DInner({
   const isAddingLine = toolManager.activeTool === 'line'
   const isAddingBody = toolManager.activeTool === 'body'
   const isCalibrating = toolManager.activeTool === 'calibration'
+  const isMeasuring = toolManager.activeTool === 'measurement'
 
   // Local UI state
   const [isDragging, setIsDragging] = useState(false)
@@ -238,7 +239,9 @@ function Canvas3DInner({
           isAddingLine={isAddingLine}
           isAddingBody={isAddingBody}
           isCalibrating={isCalibrating}
+          isMeasuring={isMeasuring}
           calibrationPoints={toolManager.calibrationPoints}
+          measurementPoints={toolManager.measurementPoints}
           selectedLinePoints={toolManager.selectedLinePoints}
           polygons={polygons}
           bodies={bodies}
@@ -249,6 +252,7 @@ function Canvas3DInner({
           planeWidth={planeWidth}
           onPlaneClick={handlers.onPlaneClick!}
           onCalibrationClick={handlers.onPlaneClick!}
+          onMeasurementClick={handlers.onPlaneClick!}
           onPointDragStart={handlers.onPointDragStart!}
           onPointDrag={handlers.onPointDrag!}
           onPointDragEnd={handlers.onPointDragEnd!}
@@ -306,6 +310,16 @@ function Canvas3DInner({
           onKnownLengthChange={toolManager.calibrationTool.setKnownLength}
           onCopy={toolManager.calibrationTool.handleCopyPixelsPerMeter}
           onClear={toolManager.calibrationTool.handleClearCalibration}
+        />
+      )}
+
+      {isMeasuring && (
+        <MeasurementPanel
+          show={toolManager.measurementTool.state.showPanel}
+          measuredDistance={toolManager.measurementTool.state.measuredDistance}
+          copyFeedback={toolManager.measurementTool.state.copyFeedback}
+          onCopy={toolManager.measurementTool.handleCopyMeasurement}
+          onClear={toolManager.measurementTool.handleClearMeasurement}
         />
       )}
     </div>

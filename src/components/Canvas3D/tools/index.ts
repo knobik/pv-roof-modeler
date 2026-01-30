@@ -7,6 +7,8 @@ export { useBodyTool } from './BodyTool'
 export type { BodyToolExtended } from './BodyTool/useBodyTool'
 export { useCalibrationTool } from './CalibrationTool'
 export type { CalibrationToolExtended } from './CalibrationTool/useCalibrationTool'
+export { useMeasurementTool } from './MeasurementTool'
+export type { MeasurementToolExtended } from './MeasurementTool/useMeasurementTool'
 export { useToolManager } from './useToolManager'
 export type { ToolManagerReturn, ToolManagerHandlers } from './useToolManager'
 export type {
@@ -19,4 +21,5 @@ export type {
   LineToolState,
   BodyToolState,
   CalibrationToolState,
+  MeasurementToolState,
 } from './types'

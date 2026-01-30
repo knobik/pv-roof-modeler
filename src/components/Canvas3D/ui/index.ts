@@ -10,6 +10,9 @@ export type { PolygonActionsProps } from './PolygonActions'
 export { CalibrationPanel } from './CalibrationPanel'
 export type { CalibrationPanelProps } from './CalibrationPanel'
 
+export { MeasurementPanel } from './MeasurementPanel'
+export type { MeasurementPanelProps } from './MeasurementPanel'
+
 export { TimeControl } from './TimeControl'
 export type { TimeControlProps } from './TimeControl'
 

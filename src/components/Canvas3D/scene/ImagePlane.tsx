@@ -8,9 +8,11 @@ export interface ImagePlaneProps {
   aspectRatio: number
   isAddingPolygon: boolean
   isCalibrating: boolean
+  isMeasuring: boolean
   receiveShadow: boolean
   onPlaneClick: (point: THREE.Vector3) => void
   onCalibrationClick: (point: THREE.Vector3) => void
+  onMeasurementClick: (point: THREE.Vector3) => void
 }
 
 export function ImagePlane({
@@ -18,9 +20,11 @@ export function ImagePlane({
   aspectRatio,
   isAddingPolygon,
   isCalibrating,
+  isMeasuring,
   receiveShadow,
   onPlaneClick,
-  onCalibrationClick
+  onCalibrationClick,
+  onMeasurementClick,
 }: ImagePlaneProps) {
   const meshRef = useRef<THREE.Mesh>(null)
   const texture = useMemo(
@@ -43,9 +47,14 @@ export function ImagePlane({
         const point = e.point.clone()
         point.y = OUTLINE_HEIGHT
         onCalibrationClick(point)
+      } else if (isMeasuring) {
+        e.stopPropagation()
+        const point = e.point.clone()
+        point.y = OUTLINE_HEIGHT
+        onMeasurementClick(point)
       }
     },
-    [isAddingPolygon, isCalibrating, onPlaneClick, onCalibrationClick]
+    [isAddingPolygon, isCalibrating, isMeasuring, onPlaneClick, onCalibrationClick, onMeasurementClick]
   )
 
   if (!texture) return null

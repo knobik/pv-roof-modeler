@@ -7,12 +7,14 @@ import { usePolygonTool, type PolygonToolExtended } from './PolygonTool/usePolyg
 import { useLineTool } from './LineTool/useLineTool'
 import { useBodyTool, type BodyToolExtended } from './BodyTool/useBodyTool'
 import { useCalibrationTool, type CalibrationToolExtended } from './CalibrationTool/useCalibrationTool'
+import { useMeasurementTool, type MeasurementToolExtended } from './MeasurementTool/useMeasurementTool'
 import { useToolContext } from '../context/ToolContext'
 import { useCanvasContext } from '../context/CanvasContext'
 
 export type { PolygonToolExtended } from './PolygonTool/usePolygonTool'
 export type { BodyToolExtended } from './BodyTool/useBodyTool'
 export type { CalibrationToolExtended } from './CalibrationTool/useCalibrationTool'
+export type { MeasurementToolExtended } from './MeasurementTool/useMeasurementTool'
 export type { SelectToolExtended } from './SelectTool/useSelectTool'
 
 export interface ToolManagerHandlers extends ToolActions {
@@ -38,6 +40,7 @@ export interface ToolManagerReturn {
   currentPoints: THREE.Vector3[]
   currentColor: string
   calibrationPoints: THREE.Vector3[]
+  measurementPoints: THREE.Vector3[]
   selectedLinePoints: { polygonId: string; pointIndex: number } | null
 
   // Individual tool instances for direct access
@@ -46,6 +49,7 @@ export interface ToolManagerReturn {
   lineTool: ToolHookReturn
   bodyTool: BodyToolExtended
   calibrationTool: CalibrationToolExtended
+  measurementTool: MeasurementToolExtended
 }
 
 export function useToolManager(): ToolManagerReturn {
@@ -57,6 +61,7 @@ export function useToolManager(): ToolManagerReturn {
     setActiveTool: setActiveToolRaw,
     currentPoints,
     calibrationPoints,
+    measurementPoints,
     selectedLinePoints,
   } = toolContext
 
@@ -68,6 +73,7 @@ export function useToolManager(): ToolManagerReturn {
   const lineTool = useLineTool()
   const bodyTool = useBodyTool()
   const calibrationTool = useCalibrationTool()
+  const measurementTool = useMeasurementTool()
 
   // Tool lookup by name
   const tools = useMemo(() => ({
@@ -76,7 +82,8 @@ export function useToolManager(): ToolManagerReturn {
     line: lineTool,
     body: bodyTool,
     calibration: calibrationTool,
-  }), [selectTool, polygonTool, lineTool, bodyTool, calibrationTool])
+    measurement: measurementTool,
+  }), [selectTool, polygonTool, lineTool, bodyTool, calibrationTool, measurementTool])
 
   const getToolByName = useCallback((name: ToolName): ToolHookReturn<ToolState> => {
     return tools[name]
@@ -106,12 +113,14 @@ export function useToolManager(): ToolManagerReturn {
     onActivate: () => currentTool.actions.onActivate?.(),
     onDeactivate: () => currentTool.actions.onDeactivate?.(),
 
-    // Plane click - polygon and calibration tools
+    // Plane click - polygon, calibration, and measurement tools
     onPlaneClick: (point: THREE.Vector3) => {
       if (activeTool === 'polygon') {
         polygonTool.actions.onPlaneClick?.(point)
       } else if (activeTool === 'calibration') {
         calibrationTool.actions.onPlaneClick?.(point)
+      } else if (activeTool === 'measurement') {
+        measurementTool.actions.onPlaneClick?.(point)
       }
     },
 
@@ -182,6 +191,7 @@ export function useToolManager(): ToolManagerReturn {
     lineTool,
     bodyTool,
     calibrationTool,
+    measurementTool,
     setActiveTool,
   ])
 
@@ -197,7 +207,7 @@ export function useToolManager(): ToolManagerReturn {
   }, [handlers])
 
   // Computed flags
-  const isDrawing = activeTool === 'polygon' || activeTool === 'calibration'
+  const isDrawing = activeTool === 'polygon' || activeTool === 'calibration' || activeTool === 'measurement'
   const orbitEnabled = activeTool === 'select' && !isDraggingPoint
 
   // Get current color from polygon tool state (now properly typed)
@@ -213,11 +223,13 @@ export function useToolManager(): ToolManagerReturn {
     currentPoints,
     currentColor,
     calibrationPoints,
+    measurementPoints,
     selectedLinePoints,
     selectTool,
     polygonTool,
     lineTool,
     bodyTool,
     calibrationTool,
+    measurementTool,
   }
 }

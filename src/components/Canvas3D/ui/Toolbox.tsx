@@ -1,6 +1,6 @@
 import type { ToolName } from '../types'
 import type { HistoryContextValue } from '../../../hooks/useHistory'
-import { IconCursor, IconPolygon, IconLine, IconBody, IconCalibration, IconUndo, IconRedo } from './Icons'
+import { IconCursor, IconPolygon, IconLine, IconBody, IconCalibration, IconMeasurement, IconUndo, IconRedo } from './Icons'
 
 export interface ToolboxProps {
   activeTool: ToolName
@@ -25,6 +25,7 @@ export function Toolbox({
         <IconCursor />
         <span className="canvas3d-tool-tooltip">Select (V)</span>
       </button>
+      <div className="canvas3d-toolbox-divider" />
       <button
         className={`canvas3d-tool ${activeTool === 'polygon' ? 'canvas3d-tool--active' : ''}`}
         onClick={() => onSelectTool('polygon')}
@@ -51,13 +52,22 @@ export function Toolbox({
         <IconBody />
         <span className="canvas3d-tool-tooltip">Add Body (B)</span>
       </button>
+      <div className="canvas3d-toolbox-divider" />
       <button
         className={`canvas3d-tool ${activeTool === 'calibration' ? 'canvas3d-tool--active' : ''}`}
         onClick={() => onSelectTool('calibration')}
         title="Calibrate pixels per meter"
       >
         <IconCalibration />
-        <span className="canvas3d-tool-tooltip">Calibrate (M)</span>
+        <span className="canvas3d-tool-tooltip">Calibrate (C)</span>
+      </button>
+      <button
+        className={`canvas3d-tool ${activeTool === 'measurement' ? 'canvas3d-tool--active' : ''}`}
+        onClick={() => onSelectTool('measurement')}
+        title="Measure distance"
+      >
+        <IconMeasurement />
+        <span className="canvas3d-tool-tooltip">Measure (M)</span>
       </button>
 
       {historyContext && (
