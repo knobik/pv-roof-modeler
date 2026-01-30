@@ -2,27 +2,22 @@ import { useCallback } from 'react'
 import * as THREE from 'three'
 import type { ToolHookReturn } from '../types'
 import type { Polygon } from '../../types'
-import type { HistoryContextValue } from '../../../../hooks/useHistory'
+import { useCanvasContext } from '../../context/CanvasContext'
+import { useToolContext } from '../../context/ToolContext'
+import { COLORS } from '../../constants'
 
-export interface UsePolygonToolOptions {
-  currentPoints: THREE.Vector3[]
-  setCurrentPoints: React.Dispatch<React.SetStateAction<THREE.Vector3[]>>
-  currentColor: string
-  polygons: Polygon[]
-  setPolygons: (polygons: Polygon[]) => void
-  setActiveTool: (tool: 'select' | 'polygon' | 'line' | 'body' | 'measure') => void
-  historyContext?: HistoryContextValue
+export interface PolygonToolExtended extends ToolHookReturn {
+  handleFinishPolygon: () => void
+  handleUndoPoint: () => void
 }
 
-export function usePolygonTool({
-  currentPoints,
-  setCurrentPoints,
-  currentColor,
-  polygons,
-  setPolygons,
-  setActiveTool,
-  historyContext,
-}: UsePolygonToolOptions): ToolHookReturn {
+export function usePolygonTool(): PolygonToolExtended {
+  const { polygons, setPolygons, historyContext } = useCanvasContext()
+  const { currentPoints, setCurrentPoints, setActiveTool } = useToolContext()
+
+  // Calculate current color based on polygon count
+  const currentColor = COLORS[polygons.length % COLORS.length]
+
   const onPlaneClick = useCallback((point: THREE.Vector3) => {
     setCurrentPoints((prev) => [...prev, point])
   }, [setCurrentPoints])
@@ -31,6 +26,10 @@ export function usePolygonTool({
     setCurrentPoints([])
     setActiveTool('select')
   }, [setCurrentPoints, setActiveTool])
+
+  const onDeactivate = useCallback(() => {
+    setCurrentPoints([])
+  }, [setCurrentPoints])
 
   const handleFinishPolygon = useCallback(() => {
     if (currentPoints.length >= 3) {
@@ -68,17 +67,13 @@ export function usePolygonTool({
     actions: {
       onPlaneClick,
       onCancel,
+      onDeactivate,
     },
     render: {
-      SceneElements: null, // Scene elements are rendered via PolygonOutlines
-      UIElements: null, // UI handled separately
       statusText: getStatusText(),
     },
-    // Additional actions exposed for UI
     handleFinishPolygon,
     handleUndoPoint,
-  } as ToolHookReturn & {
-    handleFinishPolygon: () => void
-    handleUndoPoint: () => void
   }
 }
+

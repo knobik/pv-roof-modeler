@@ -7,12 +7,6 @@ export interface ToolContextValue {
   activeTool: ToolName
   setActiveTool: (tool: ToolName) => void
 
-  // Tool state flags
-  isAddingPolygon: boolean
-  isAddingLine: boolean
-  isAddingBody: boolean
-  isMeasuring: boolean
-
   // Selected line points (for line tool)
   selectedLinePoints: { polygonId: string; pointIndex: number } | null
   setSelectedLinePoints: (points: { polygonId: string; pointIndex: number } | null) => void
@@ -24,6 +18,10 @@ export interface ToolContextValue {
   // Measure tool state
   measurePoints: THREE.Vector3[]
   setMeasurePoints: React.Dispatch<React.SetStateAction<THREE.Vector3[]>>
+  knownLength: number
+  setKnownLength: React.Dispatch<React.SetStateAction<number>>
+  copyFeedback: boolean
+  setCopyFeedback: React.Dispatch<React.SetStateAction<boolean>>
 
   // Tool switching helper
   handleSelectTool: (tool: ToolName) => void
@@ -43,11 +41,8 @@ export function ToolProvider({ children }: ToolProviderProps) {
   } | null>(null)
   const [currentPoints, setCurrentPoints] = useState<THREE.Vector3[]>([])
   const [measurePoints, setMeasurePoints] = useState<THREE.Vector3[]>([])
-
-  const isAddingPolygon = activeTool === 'polygon'
-  const isAddingLine = activeTool === 'line'
-  const isAddingBody = activeTool === 'body'
-  const isMeasuring = activeTool === 'measure'
+  const [knownLength, setKnownLength] = useState<number>(4.5)
+  const [copyFeedback, setCopyFeedback] = useState<boolean>(false)
 
   const handleSelectTool = useCallback((tool: ToolName) => {
     if (activeTool === 'polygon' && currentPoints.length > 0) {
@@ -63,26 +58,24 @@ export function ToolProvider({ children }: ToolProviderProps) {
   const value = useMemo<ToolContextValue>(() => ({
     activeTool,
     setActiveTool,
-    isAddingPolygon,
-    isAddingLine,
-    isAddingBody,
-    isMeasuring,
     selectedLinePoints,
     setSelectedLinePoints,
     currentPoints,
     setCurrentPoints,
     measurePoints,
     setMeasurePoints,
+    knownLength,
+    setKnownLength,
+    copyFeedback,
+    setCopyFeedback,
     handleSelectTool,
   }), [
     activeTool,
-    isAddingPolygon,
-    isAddingLine,
-    isAddingBody,
-    isMeasuring,
     selectedLinePoints,
     currentPoints,
     measurePoints,
+    knownLength,
+    copyFeedback,
     handleSelectTool,
   ])
 

@@ -1,21 +1,26 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import * as THREE from 'three'
 import type { ToolHookReturn } from '../types'
 import { PLANE_WIDTH } from '../../constants'
+import { useCanvasContext } from '../../context/CanvasContext'
+import { useToolContext } from '../../context/ToolContext'
 
-export interface UseMeasureToolOptions {
-  measurePoints: THREE.Vector3[]
-  setMeasurePoints: React.Dispatch<React.SetStateAction<THREE.Vector3[]>>
-  imageWidth: number | null
+export interface MeasureToolExtended extends ToolHookReturn {
+  setKnownLength: (length: number) => void
+  handleCopyPixelsPerMeter: () => void
+  handleClearMeasurement: () => void
 }
 
-export function useMeasureTool({
-  measurePoints,
-  setMeasurePoints,
-  imageWidth,
-}: UseMeasureToolOptions): ToolHookReturn {
-  const [knownLength, setKnownLength] = useState<number>(4.5) // default car length
-  const [copyFeedback, setCopyFeedback] = useState(false)
+export function useMeasureTool(): MeasureToolExtended {
+  const { imageWidth } = useCanvasContext()
+  const {
+    measurePoints,
+    setMeasurePoints,
+    knownLength,
+    setKnownLength,
+    copyFeedback,
+    setCopyFeedback,
+  } = useToolContext()
 
   // Dynamic calculation of pixels per meter
   const calculatedPixelsPerMeter = useMemo(() => {
@@ -51,13 +56,17 @@ export function useMeasureTool({
       setCopyFeedback(true)
       setTimeout(() => setCopyFeedback(false), 1500)
     })
-  }, [calculatedPixelsPerMeter])
+  }, [calculatedPixelsPerMeter, setCopyFeedback])
 
   const handleClearMeasurement = useCallback(() => {
     setMeasurePoints([])
   }, [setMeasurePoints])
 
   const onCancel = useCallback(() => {
+    setMeasurePoints([])
+  }, [setMeasurePoints])
+
+  const onDeactivate = useCallback(() => {
     setMeasurePoints([])
   }, [setMeasurePoints])
 
@@ -82,18 +91,13 @@ export function useMeasureTool({
     actions: {
       onPlaneClick,
       onCancel,
+      onDeactivate,
     },
     render: {
-      SceneElements: null, // Scene elements rendered via Scene component
-      UIElements: null, // UI handled separately
       statusText: getStatusText(),
     },
-    setKnownLength,
+    setKnownLength: (length: number) => setKnownLength(length),
     handleCopyPixelsPerMeter,
     handleClearMeasurement,
-  } as ToolHookReturn & {
-    setKnownLength: (length: number) => void
-    handleCopyPixelsPerMeter: () => void
-    handleClearMeasurement: () => void
   }
 }

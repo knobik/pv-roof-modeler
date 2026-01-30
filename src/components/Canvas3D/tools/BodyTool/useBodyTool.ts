@@ -1,18 +1,15 @@
 import { useCallback } from 'react'
 import type { ToolHookReturn } from '../types'
-import type { Polygon, Body } from '../../types'
+import type { Body } from '../../types'
+import { useCanvasContext } from '../../context/CanvasContext'
 
-export interface UseBodyToolOptions {
-  polygons: Polygon[]
-  bodies: Body[]
-  setBodies: (bodies: Body[]) => void
+export interface BodyToolExtended extends ToolHookReturn {
+  handleDeleteBody: (bodyId: string) => void
 }
 
-export function useBodyTool({
-  polygons,
-  bodies,
-  setBodies,
-}: UseBodyToolOptions): ToolHookReturn {
+export function useBodyTool(): BodyToolExtended {
+  const { polygons, bodies, setBodies } = useCanvasContext()
+
   const onPolygonClick = useCallback(
     (polygonId: string) => {
       const polygon = polygons.find((p) => p.id === polygonId)
@@ -42,18 +39,23 @@ export function useBodyTool({
     [bodies, setBodies]
   )
 
+  // Body click handler for deletion via right-click
+  const onBodyClick = useCallback(
+    (bodyId: string) => {
+      handleDeleteBody(bodyId)
+    },
+    [handleDeleteBody]
+  )
+
   return {
     state: {},
     actions: {
       onPolygonClick,
+      onBodyClick,
     },
     render: {
-      SceneElements: null,
-      UIElements: null,
       statusText: 'Click on a polygon to create a 3D body • Right-click body to delete',
     },
     handleDeleteBody,
-  } as ToolHookReturn & {
-    handleDeleteBody: (bodyId: string) => void
   }
 }

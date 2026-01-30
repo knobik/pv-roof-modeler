@@ -1,23 +1,12 @@
 import { useCallback } from 'react'
 import type { ToolHookReturn } from '../types'
-import type { Polygon } from '../../types'
-import type { HistoryContextValue } from '../../../../hooks/useHistory'
+import { useCanvasContext } from '../../context/CanvasContext'
+import { useToolContext } from '../../context/ToolContext'
 
-export interface UseLineToolOptions {
-  selectedLinePoints: { polygonId: string; pointIndex: number } | null
-  setSelectedLinePoints: (points: { polygonId: string; pointIndex: number } | null) => void
-  polygons: Polygon[]
-  setPolygons: (polygons: Polygon[]) => void
-  historyContext?: HistoryContextValue
-}
+export function useLineTool(): ToolHookReturn {
+  const { polygons, setPolygons, historyContext } = useCanvasContext()
+  const { selectedLinePoints, setSelectedLinePoints } = useToolContext()
 
-export function useLineTool({
-  selectedLinePoints,
-  setSelectedLinePoints,
-  polygons,
-  setPolygons,
-  historyContext,
-}: UseLineToolOptions): ToolHookReturn {
   const onPointClick = useCallback(
     (polygonId: string, pointIndex: number) => {
       if (!selectedLinePoints) {
@@ -66,6 +55,10 @@ export function useLineTool({
     setSelectedLinePoints(null)
   }, [setSelectedLinePoints])
 
+  const onDeactivate = useCallback(() => {
+    setSelectedLinePoints(null)
+  }, [setSelectedLinePoints])
+
   const getStatusText = () => {
     return selectedLinePoints
       ? 'Click another point to create a line'
@@ -79,10 +72,9 @@ export function useLineTool({
     actions: {
       onPointClick,
       onCancel,
+      onDeactivate,
     },
     render: {
-      SceneElements: null,
-      UIElements: null,
       statusText: getStatusText(),
     },
   }
