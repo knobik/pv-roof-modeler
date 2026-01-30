@@ -4,33 +4,67 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A React component library for 3D canvas interactions, specifically designed for annotating aerial images with polygon outlines (e.g., marking house boundaries). Built with React 19, TypeScript, and Three.js via react-three-fiber.
+A React component library for 3D canvas interactions, specifically designed for annotating aerial images with polygon outlines (e.g., marking house boundaries). Built with React 18/19, TypeScript, and Three.js via react-three-fiber.
 
 ## Commands
 
 - `npm run dev` - Start Vite dev server with demo playground
 - `npm run build` - TypeScript check + Vite library build (outputs to `dist/`)
+- `npm run build:demo` - Build demo for GitHub Pages deployment
 - `npm run lint` - Run ESLint
 
 ## Architecture
 
-**Library Mode**: Configured as a Vite library (`vite.config.ts`). The entry point is `src/index.ts` which exports all public components. React/ReactDOM are externalized as peer dependencies.
+**Library Mode**: Configured as a Vite library (`vite.config.ts`). Entry point is `src/index.ts`. React/ReactDOM are externalized as peer dependencies.
 
 **Key Components**:
-- `Canvas3D` - 3D canvas with image plane, polygon drawing/editing, and orbit controls. Supports controlled mode via `polygons`/`onPolygonsChange` props for external state management.
-- `PolygonList` - Companion component displaying polygon list with color pickers and delete actions.
+- `Canvas3D` - 3D canvas with image plane, polygon drawing/editing, orbit controls. Supports controlled mode via `polygons`/`onPolygonsChange` props.
+- `PolygonList` - Sidebar component for managing polygons and bodies with color pickers, height controls, visibility toggles.
+- `PVRoofModeler` - Higher-level component combining Canvas3D + PolygonList with built-in state management and undo/redo.
 
-**3D Stack**: Uses `@react-three/fiber` for React-Three.js bindings and `@react-three/drei` for OrbitControls and Line components.
+**3D Stack**: Uses `@react-three/fiber` for React-Three.js bindings, `@react-three/drei` for OrbitControls and Line, and `suncalc` for realistic sun positioning.
 
-**Demo**: `src/demo/` contains a playground app for testing components locally. The demo is not included in the library build.
+**Demo**: `src/demo/` contains a playground app (excluded from library build).
 
-## Component Patterns
+## Canvas3D Internal Architecture
 
-`Canvas3D` uses a hybrid controlled/uncontrolled pattern:
-- Internal state (`internalPolygons`) is always used for rendering to enable smooth drag feedback
-- In controlled mode, internal state syncs with props except during active drag operations
-- The `Polygon` interface includes `points` (Vector3[]), `color`, and `lines` (pairs of point indices for internal face lines)
+The Canvas3D component uses a modular architecture:
+
+```
+src/components/Canvas3D/
+├── Canvas3D.tsx      # Main component
+├── types.ts          # Polygon, Body, ToolName types
+├── constants.ts      # OUTLINE_HEIGHT, POINT_SIZE, PLANE_WIDTH, etc.
+├── primitives/       # Low-level 3D components (DraggablePoint, ClickableEdge, etc.)
+├── scene/            # Scene composition (Scene, ImagePlane, SunLight, BuildingBody, etc.)
+├── tools/            # Tool hooks (useSelectTool, usePolygonTool, useLineTool, etc.)
+├── ui/               # HTML overlay components (Toolbox, StatusBar, MeasurePanel, etc.)
+└── context/          # React contexts (CanvasContext, ToolContext)
+```
+
+**Key Patterns**:
+
+1. **Controlled/Uncontrolled Hybrid**: Internal state (`internalPolygons`) is always used for rendering to enable smooth drag feedback. In controlled mode, internal state syncs with props except during active drag operations.
+
+2. **Point Scaling**: All interactive points use `useFrame` to scale based on camera distance, maintaining consistent visual size regardless of zoom.
+
+3. **Tool Hooks**: Each tool (select, polygon, line, body, measure) has a dedicated hook in `tools/` that encapsulates tool-specific state and handlers.
+
+## Adding New Tools
+
+1. Create `tools/NewTool/useNewTool.ts` hook
+2. Export from `tools/index.ts`
+3. Add tool name to `ToolName` type in `types.ts`
+4. Add tool button to `ui/Toolbox.tsx`
+5. Wire up handlers in `Canvas3D.tsx`
+
+## Key Constants
+
+Defined in `Canvas3D/constants.ts`:
+- `PLANE_WIDTH = 5` - Width of image plane in 3D units (used for pixel-to-meter calculations)
+- `OUTLINE_HEIGHT = 0.01` - Y-position for polygon outlines
+- `BASE_CAMERA_DISTANCE = 8` - Reference distance for point scaling
 
 ## User Preferences
 
-When the user says `#remember <something>`, add that note to this CLAUDE.md file under this section.
+When the user says `#remember <something>`, add that note here.
