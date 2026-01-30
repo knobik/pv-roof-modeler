@@ -10,7 +10,7 @@ A React component library for annotating aerial images with polygon outlines in 
 - **Polygon Drawing** - Draw polygon outlines to mark boundaries (e.g., house rooftops)
 - **Point Editing** - Drag points to adjust polygons, add points on edges, remove points with right-click
 - **Internal Lines** - Add lines between polygon points to define faces
-- **3D Bodies** - Extract polygons into 3D extruded building shapes with adjustable height
+- **3D Bodies** - Extract polygons into 3D extruded building shapes with adjustable height in meters
 - **Shadows** - Realistic shadow casting with adjustable time of day
 - **Sun Simulation** - Dynamic sun position using [suncalc](https://github.com/mourner/suncalc) for accurate solar positioning based on latitude, longitude, and date
 - **Polygon Management** - Hierarchical list component for managing polygons and their associated bodies
@@ -105,6 +105,7 @@ All-in-one component that combines `Canvas3D` and `PolygonList` with built-in st
 | `latitude` | `number` | - | Latitude for realistic sun position (e.g., 52.2297 for Warsaw) |
 | `longitude` | `number` | - | Longitude for realistic sun position (e.g., 21.0122 for Warsaw) |
 | `date` | `Date` | today | Date for sun position calculation |
+| `pixelsPerMeter` | `number` | - | Pixels per meter ratio for real-world height measurements |
 | `sidebarWidth` | `number \| string` | `280` | Width of the polygon list sidebar |
 | `sidebarPosition` | `'left' \| 'right'` | `'right'` | Position of the sidebar |
 | `hideSidebar` | `boolean` | `false` | Hide the sidebar completely |
@@ -133,6 +134,7 @@ All-in-one component that combines `Canvas3D` and `PolygonList` with built-in st
 | `latitude` | `number` | - | Latitude for realistic sun position (e.g., 52.2297 for Warsaw) |
 | `longitude` | `number` | - | Longitude for realistic sun position (e.g., 21.0122 for Warsaw) |
 | `date` | `Date` | today | Date for sun position calculation |
+| `pixelsPerMeter` | `number` | - | Pixels per meter ratio for real-world height measurements |
 | `outlineColor` | `string` | auto | Override polygon outline color (auto-cycles through preset colors) |
 | `polygons` | `Polygon[]` | - | Controlled polygons array |
 | `bodies` | `Body[]` | - | Controlled 3D bodies array |
@@ -162,12 +164,14 @@ Hierarchical list component for managing polygons and bodies.
 | `polygons` | `Polygon[]` | Array of polygons to display |
 | `bodies` | `Body[]` | Array of bodies (shown nested under their parent polygon) |
 | `selectedPolygonId` | `string \| null` | Currently selected polygon ID |
+| `pixelsPerMeter` | `number` | Pixels per meter ratio for height conversion to meters |
+| `imageWidth` | `number` | Image width in pixels (used with pixelsPerMeter for scale) |
 | `onSelectPolygon` | `(id: string \| null) => void` | Selection callback |
 | `onDeletePolygon` | `(id: string) => void` | Delete polygon callback |
 | `onPolygonColorChange` | `(id: string, color: string) => void` | Polygon color change callback |
 | `onDeleteBody` | `(id: string) => void` | Delete body callback |
 | `onBodyColorChange` | `(id: string, color: string) => void` | Body color change callback |
-| `onBodyHeightChange` | `(id: string, height: number) => void` | Body height change callback |
+| `onBodyHeightChange` | `(id: string, height: number) => void` | Body height change callback (height in Three.js units) |
 
 ### Polygon Interface
 
@@ -187,7 +191,7 @@ interface Body {
   id: string
   polygonId: string  // reference to source polygon
   points: THREE.Vector3[]  // base points (synced with polygon)
-  height: number
+  height: number  // height in Three.js units (converted to meters in UI when pixelsPerMeter is set)
   color: string
 }
 ```
