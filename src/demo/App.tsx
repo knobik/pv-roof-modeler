@@ -1,5 +1,37 @@
 import { useState } from 'react'
 import { PVRoofModeler } from '../components/PVRoofModeler'
+import { HistoryProvider, useHistoryOptional } from '../hooks'
+import { HistoryDebugger } from '../components/HistoryDebugger'
+
+function ModelerWithDebugger({
+  latitude,
+  longitude,
+  date,
+}: {
+  latitude: number
+  longitude: number
+  date: Date
+}) {
+  const history = useHistoryOptional()
+
+  return (
+    <div style={{ display: 'flex', gap: '1rem' }}>
+      <div style={{ flex: 1 }}>
+        <PVRoofModeler
+          height="calc(100vh - 300px)"
+          showGrid={false}
+          latitude={latitude}
+          longitude={longitude}
+          date={date}
+          historyContext={history || undefined}
+        />
+      </div>
+      <div style={{ width: 250 }}>
+        <HistoryDebugger title="History Debug" maxHeight="calc(100vh - 320px)" />
+      </div>
+    </div>
+  )
+}
 
 export function App() {
   const [latitude, setLatitude] = useState(52.2297)
@@ -51,13 +83,13 @@ export function App() {
             />
           </div>
         </div>
-        <PVRoofModeler
-          height="calc(100vh - 300px)"
-          showGrid={false}
-          latitude={latitude}
-          longitude={longitude}
-          date={new Date(date)}
-        />
+        <HistoryProvider>
+          <ModelerWithDebugger
+            latitude={latitude}
+            longitude={longitude}
+            date={new Date(date)}
+          />
+        </HistoryProvider>
       </section>
     </div>
   )

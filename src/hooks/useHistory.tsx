@@ -19,6 +19,14 @@ export interface HistoryContextValue {
   endBatch: () => void
   canUndo: boolean
   canRedo: boolean
+
+  // Full history stacks for external display
+  undoStack: readonly EditorState[]
+  redoStack: readonly EditorState[]
+
+  // Navigate to a specific state in history
+  goToUndoState: (index: number) => void
+  goToRedoState: (index: number) => void
 }
 
 const HistoryContext = createContext<HistoryContextValue | null>(null)
@@ -113,6 +121,48 @@ export function HistoryProvider({
     forceUpdate({})
   }, [state])
 
+  const goToUndoState = useCallback((index: number) => {
+    const undoStack = undoStackRef.current
+    if (index < 0 || index >= undoStack.length) return
+
+    // Target state becomes current
+    const targetState = undoStack[index]
+
+    // States after target (index+1 to end) plus current state go to redo
+    const statesToRedo = [
+      ...undoStack.slice(index + 1),
+      cloneState(state),
+    ]
+
+    // States before target remain in undo
+    undoStackRef.current = undoStack.slice(0, index)
+    redoStackRef.current = [...statesToRedo.reverse(), ...redoStackRef.current]
+
+    setState(targetState)
+    forceUpdate({})
+  }, [state])
+
+  const goToRedoState = useCallback((index: number) => {
+    const redoStack = redoStackRef.current
+    if (index < 0 || index >= redoStack.length) return
+
+    // Target state becomes current
+    const targetState = redoStack[index]
+
+    // Current state plus states before target (0 to index-1) go to undo
+    const statesToUndo = [
+      cloneState(state),
+      ...redoStack.slice(0, index),
+    ]
+
+    // States after target remain in redo
+    undoStackRef.current = [...undoStackRef.current, ...statesToUndo]
+    redoStackRef.current = redoStack.slice(index + 1)
+
+    setState(targetState)
+    forceUpdate({})
+  }, [state])
+
   const setPolygons = useCallback((polygons: Polygon[]) => {
     setState(prev => ({ ...prev, polygons }))
   }, [])
@@ -132,7 +182,11 @@ export function HistoryProvider({
     endBatch,
     canUndo: undoStackRef.current.length > 0,
     canRedo: redoStackRef.current.length > 0,
-  }), [state, setPolygons, setBodies, undo, redo, takeSnapshot, beginBatch, endBatch])
+    undoStack: undoStackRef.current,
+    redoStack: redoStackRef.current,
+    goToUndoState,
+    goToRedoState,
+  }), [state, setPolygons, setBodies, undo, redo, takeSnapshot, beginBatch, endBatch, goToUndoState, goToRedoState])
 
   return (
     <HistoryContext.Provider value={value}>

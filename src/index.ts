@@ -8,6 +8,9 @@ export type { PolygonListProps } from './components/PolygonList'
 export { PVRoofModeler } from './components/PVRoofModeler'
 export type { PVRoofModelerProps } from './components/PVRoofModeler'
 
+export { HistoryDebugger } from './components/HistoryDebugger'
+export type { HistoryDebuggerProps } from './components/HistoryDebugger'
+
 // Hooks
 export { HistoryProvider, useHistory, useHistoryOptional } from './hooks'
 export type { EditorState, HistoryContextValue, HistoryProviderProps } from './hooks'

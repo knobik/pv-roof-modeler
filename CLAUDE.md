@@ -30,3 +30,7 @@ A React component library for 3D canvas interactions, specifically designed for 
 - Internal state (`internalPolygons`) is always used for rendering to enable smooth drag feedback
 - In controlled mode, internal state syncs with props except during active drag operations
 - The `Polygon` interface includes `points` (Vector3[]), `color`, and `lines` (pairs of point indices for internal face lines)
+
+## User Preferences
+
+When the user says `#remember <something>`, add that note to this CLAUDE.md file under this section.

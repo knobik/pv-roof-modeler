@@ -1,0 +1,101 @@
+.history-debugger {
+  background: #1a1a2e;
+  border: 1px solid #333;
+  border-radius: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 12px;
+  color: #e0e0e0;
+  overflow: hidden;
+}
+
+.history-debugger-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #252542;
+  border-bottom: 1px solid #333;
+}
+
+.history-debugger-title {
+  font-weight: 600;
+  color: #fff;
+}
+
+.history-debugger-counts {
+  color: #888;
+  font-size: 11px;
+}
+
+.history-debugger-list {
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.history-debugger-empty {
+  padding: 16px;
+  text-align: center;
+  color: #666;
+}
+
+.history-debugger-section {
+  margin-bottom: 8px;
+}
+
+.history-debugger-section:last-child {
+  margin-bottom: 0;
+}
+
+.history-debugger-section-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #666;
+  margin-bottom: 4px;
+  padding-left: 4px;
+}
+
+.history-debugger-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px;
+  background: #252542;
+  border-radius: 4px;
+  margin-bottom: 2px;
+}
+
+.history-debugger-item:last-child {
+  margin-bottom: 0;
+}
+
+.history-debugger-item--current {
+  background: #2d4a2d;
+  border: 1px solid #4a7c4a;
+}
+
+.history-debugger-item--clickable {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.history-debugger-item--clickable:hover {
+  background: #363660;
+}
+
+.history-debugger-item-label {
+  font-weight: 500;
+  color: #aaa;
+}
+
+.history-debugger-item--current .history-debugger-item-label {
+  color: #8f8;
+}
+
+.history-debugger-item-stats {
+  color: #666;
+  font-size: 11px;
+}
+
+.history-debugger-item--current .history-debugger-item-stats {
+  color: #6a6;
+}

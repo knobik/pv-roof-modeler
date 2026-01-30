@@ -1292,6 +1292,22 @@ export function Canvas3D({
     setActiveTool(tool)
   }, [activeTool, currentPoints.length])
 
+  // Escape key switches to select tool
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (activeTool === 'polygon' && currentPoints.length > 0) {
+          setCurrentPoints([])
+        }
+        setSelectedLinePoints(null)
+        setActiveTool('select')
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [activeTool, currentPoints.length])
+
   const handlePointSelect = useCallback(
     (polygonId: string, pointIndex: number) => {
       if (!selectedLinePoints) {
