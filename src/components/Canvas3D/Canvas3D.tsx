@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback, useMemo, useEffect } from 'react'
-import { Canvas, useThree, ThreeEvent } from '@react-three/fiber'
+import { Canvas, useThree, useFrame, ThreeEvent } from '@react-three/fiber'
 import { OrbitControls, Line } from '@react-three/drei'
 import * as THREE from 'three'
 import SunCalc from 'suncalc'
@@ -59,6 +59,7 @@ export interface Canvas3DProps {
 const OUTLINE_HEIGHT = 0.01
 const POINT_SIZE = 0.05
 const POINT_SIZE_HOVER = 0.07
+const BASE_CAMERA_DISTANCE = 8 // Reference distance for point size scaling
 
 // Simple sun position calculation (fallback when no coordinates provided)
 // Coordinate system: -Z is north, +X is east, +Z is south, -X is west
@@ -224,6 +225,15 @@ function DraggablePoint({
   const { camera, raycaster, gl } = useThree()
   const plane = useMemo(() => new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), [])
 
+  // Scale point based on camera distance to maintain consistent visual size
+  useFrame(() => {
+    if (meshRef.current) {
+      const distance = camera.position.distanceTo(position)
+      const scale = distance / BASE_CAMERA_DISTANCE
+      meshRef.current.scale.setScalar(scale)
+    }
+  })
+
   useEffect(() => {
     if (!isDragging) return
 
@@ -315,7 +325,9 @@ interface ClickableEdgeProps {
 const MIN_DISTANCE_FROM_POINT = 0.15
 
 function ClickableEdge({ start, end, allPoints, onAddPoint }: ClickableEdgeProps) {
+  const meshRef = useRef<THREE.Mesh>(null)
   const [isHovered, setIsHovered] = useState(false)
+  const { camera } = useThree()
 
   const midpoint = useMemo(() => {
     return new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5)
@@ -330,6 +342,15 @@ function ClickableEdge({ start, end, allPoints, onAddPoint }: ClickableEdgeProps
     const euler = new THREE.Euler().setFromQuaternion(quaternion)
     return euler
   }, [start, end])
+
+  // Scale edge thickness based on camera distance (only X and Z, not Y which is the length)
+  useFrame(() => {
+    if (meshRef.current) {
+      const distance = camera.position.distanceTo(midpoint)
+      const scale = distance / BASE_CAMERA_DISTANCE
+      meshRef.current.scale.set(scale, 1, scale)
+    }
+  })
 
   const handleClick = useCallback(
     (e: ThreeEvent<MouseEvent>) => {
@@ -350,6 +371,7 @@ function ClickableEdge({ start, end, allPoints, onAddPoint }: ClickableEdgeProps
 
   return (
     <mesh
+      ref={meshRef}
       position={midpoint}
       rotation={rotation}
       onClick={handleClick}
@@ -431,7 +453,18 @@ interface ClosingPointProps {
 }
 
 function ClosingPoint({ position, color, canClose, onClose }: ClosingPointProps) {
+  const meshRef = useRef<THREE.Mesh>(null)
   const [isHovered, setIsHovered] = useState(false)
+  const { camera } = useThree()
+
+  // Scale point based on camera distance to maintain consistent visual size
+  useFrame(() => {
+    if (meshRef.current) {
+      const distance = camera.position.distanceTo(position)
+      const scale = distance / BASE_CAMERA_DISTANCE
+      meshRef.current.scale.setScalar(scale)
+    }
+  })
 
   const handleClick = useCallback(
     (e: ThreeEvent<MouseEvent>) => {
@@ -446,6 +479,7 @@ function ClosingPoint({ position, color, canClose, onClose }: ClosingPointProps)
 
   return (
     <mesh
+      ref={meshRef}
       position={position}
       onClick={handleClick}
       onPointerOver={() => setIsHovered(true)}
@@ -779,13 +813,41 @@ function PolygonOutlines({
             onClose={onClosePolygon}
           />
         ) : (
-          <mesh key={`current-${i}`} position={point}>
-            <sphereGeometry args={[POINT_SIZE, 16, 16]} />
-            <meshBasicMaterial color={currentColor} />
-          </mesh>
+          <ScaledPoint
+            key={`current-${i}`}
+            position={point}
+            color={currentColor}
+          />
         )
       )}
     </>
+  )
+}
+
+// Simple scaled point component for measurement and current polygon points
+interface ScaledPointProps {
+  position: THREE.Vector3
+  color: string
+  size?: number
+}
+
+function ScaledPoint({ position, color, size = POINT_SIZE }: ScaledPointProps) {
+  const meshRef = useRef<THREE.Mesh>(null)
+  const { camera } = useThree()
+
+  useFrame(() => {
+    if (meshRef.current) {
+      const distance = camera.position.distanceTo(position)
+      const scale = distance / BASE_CAMERA_DISTANCE
+      meshRef.current.scale.setScalar(scale)
+    }
+  })
+
+  return (
+    <mesh ref={meshRef} position={position}>
+      <sphereGeometry args={[size, 16, 16]} />
+      <meshBasicMaterial color={color} />
+    </mesh>
   )
 }
 
@@ -934,10 +996,11 @@ function Scene({
       {measurePoints.length >= 1 && (
         <>
           {measurePoints.map((point, i) => (
-            <mesh key={`measure-point-${i}`} position={point}>
-              <sphereGeometry args={[POINT_SIZE, 16, 16]} />
-              <meshBasicMaterial color="#ffaa00" />
-            </mesh>
+            <ScaledPoint
+              key={`measure-point-${i}`}
+              position={point}
+              color="#ffaa00"
+            />
           ))}
           {measurePoints.length === 2 && (
             <Line
