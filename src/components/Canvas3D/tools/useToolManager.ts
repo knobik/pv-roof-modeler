@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo } from 'react'
 import * as THREE from 'three'
 import type { ToolName } from '../types'
-import type { ToolActions, ToolHookReturn } from './types'
+import type { ToolActions, ToolHookReturn, ToolState } from './types'
 import { useSelectTool, type SelectToolExtended } from './SelectTool/useSelectTool'
 import { usePolygonTool, type PolygonToolExtended } from './PolygonTool/usePolygonTool'
 import { useLineTool } from './LineTool/useLineTool'
@@ -15,15 +15,17 @@ export type { BodyToolExtended } from './BodyTool/useBodyTool'
 export type { MeasureToolExtended } from './MeasureTool/useMeasureTool'
 export type { SelectToolExtended } from './SelectTool/useSelectTool'
 
+export interface ToolManagerHandlers extends ToolActions {
+  onPointDelete: (polygonId: string, pointIndex: number) => void
+}
+
 export interface ToolManagerReturn {
   // Current tool state
   activeTool: ToolName
   statusText: string | null
 
   // Aggregated event handlers (route to active tool)
-  handlers: ToolActions & {
-    onPointDelete?: (polygonId: string, pointIndex: number) => void
-  }
+  handlers: ToolManagerHandlers
 
   // Tool switching
   setActiveTool: (tool: ToolName) => void
@@ -67,24 +69,26 @@ export function useToolManager(): ToolManagerReturn {
   const bodyTool = useBodyTool()
   const measureTool = useMeasureTool()
 
-  // Helper to get tool by name - avoids recreating object each render
-  const getToolByName = useCallback((name: ToolName): ToolHookReturn => {
-    switch (name) {
-      case 'select': return selectTool
-      case 'polygon': return polygonTool
-      case 'line': return lineTool
-      case 'body': return bodyTool
-      case 'measure': return measureTool
-    }
-  }, [selectTool, polygonTool, lineTool, bodyTool, measureTool])
+  // Tool lookup by name
+  const tools = useMemo(() => ({
+    select: selectTool,
+    polygon: polygonTool,
+    line: lineTool,
+    body: bodyTool,
+    measure: measureTool,
+  }), [selectTool, polygonTool, lineTool, bodyTool, measureTool])
 
-  const currentTool = getToolByName(activeTool)
+  const getToolByName = useCallback((name: ToolName): ToolHookReturn<ToolState> => {
+    return tools[name]
+  }, [tools])
+
+  const currentTool = tools[activeTool]
 
   // Handle tool switching with lifecycle
   const setActiveTool = useCallback((newTool: ToolName) => {
     if (newTool === activeTool) return
 
-    // Capture current tool before switching
+    // Deactivate old tool
     const oldTool = getToolByName(activeTool)
     oldTool.actions.onDeactivate?.()
 
@@ -96,13 +100,13 @@ export function useToolManager(): ToolManagerReturn {
     nextTool.actions.onActivate?.()
   }, [activeTool, getToolByName, setActiveToolRaw])
 
-  // Aggregate handlers that route to active tool
-  const handlers = useMemo(() => ({
-    // Lifecycle
+  // Create handlers that route to the appropriate tool
+  const handlers = useMemo((): ToolManagerHandlers => ({
+    // Lifecycle - always route to current tool
     onActivate: () => currentTool.actions.onActivate?.(),
     onDeactivate: () => currentTool.actions.onDeactivate?.(),
 
-    // Route plane clicks based on active tool
+    // Plane click - polygon and measure tools
     onPlaneClick: (point: THREE.Vector3) => {
       if (activeTool === 'polygon') {
         polygonTool.actions.onPlaneClick?.(point)
@@ -111,57 +115,59 @@ export function useToolManager(): ToolManagerReturn {
       }
     },
 
-    // Route point clicks based on active tool
+    // Point click - line tool
     onPointClick: (polygonId: string, pointIndex: number) => {
       if (activeTool === 'line') {
         lineTool.actions.onPointClick?.(polygonId, pointIndex)
       }
     },
 
-    // Edge clicks - only select tool handles this
+    // Edge click - select tool only
     onEdgeClick: (polygonId: string, edgeIndex: number, position: THREE.Vector3) => {
       if (activeTool === 'select') {
         selectTool.actions.onEdgeClick?.(polygonId, edgeIndex, position)
       }
     },
 
-    // Polygon clicks for body tool
+    // Polygon click - body tool
     onPolygonClick: (polygonId: string) => {
       if (activeTool === 'body') {
         bodyTool.actions.onPolygonClick?.(polygonId)
       }
     },
 
-    // Body clicks for body tool (delete via right-click)
+    // Body click - body tool (for deletion)
     onBodyClick: (bodyId: string) => {
       if (activeTool === 'body') {
         bodyTool.actions.onBodyClick?.(bodyId)
       }
     },
 
-    // Drag handlers - only select tool handles this
+    // Drag handlers - select tool only
     onPointDragStart: () => {
       if (activeTool === 'select') {
         selectTool.actions.onPointDragStart?.()
       }
     },
+
     onPointDrag: (polygonId: string, pointIndex: number, newPosition: THREE.Vector3) => {
       if (activeTool === 'select') {
         selectTool.actions.onPointDrag?.(polygonId, pointIndex, newPosition)
       }
     },
+
     onPointDragEnd: () => {
       if (activeTool === 'select') {
         selectTool.actions.onPointDragEnd?.()
       }
     },
 
-    // Point delete - select tool handles this
+    // Point delete - always available via select tool
     onPointDelete: (polygonId: string, pointIndex: number) => {
       selectTool.onPointDelete(polygonId, pointIndex)
     },
 
-    // Cancel handler
+    // Cancel - route to current tool then switch to select
     onCancel: () => {
       currentTool.actions.onCancel?.()
       if (activeTool !== 'select') {
@@ -194,8 +200,8 @@ export function useToolManager(): ToolManagerReturn {
   const isDrawing = activeTool === 'polygon' || activeTool === 'measure'
   const orbitEnabled = activeTool === 'select' && !isDraggingPoint
 
-  // Get current color from polygon tool
-  const currentColor = polygonTool.state.currentColor as string
+  // Get current color from polygon tool state (now properly typed)
+  const currentColor = polygonTool.state.currentColor
 
   return {
     activeTool,

@@ -1,9 +1,9 @@
 import { useCallback } from 'react'
-import type { ToolHookReturn } from '../types'
+import type { ToolHookReturn, LineToolState } from '../types'
 import { useCanvasContext } from '../../context/CanvasContext'
 import { useToolContext } from '../../context/ToolContext'
 
-export function useLineTool(): ToolHookReturn {
+export function useLineTool(): ToolHookReturn<LineToolState> {
   const { polygons, setPolygons, historyContext } = useCanvasContext()
   const { selectedLinePoints, setSelectedLinePoints } = useToolContext()
 

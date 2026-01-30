@@ -1,12 +1,12 @@
 import { useCallback } from 'react'
 import * as THREE from 'three'
-import type { ToolHookReturn } from '../types'
+import type { ToolHookReturn, PolygonToolState } from '../types'
 import type { Polygon } from '../../types'
 import { useCanvasContext } from '../../context/CanvasContext'
 import { useToolContext } from '../../context/ToolContext'
 import { COLORS } from '../../constants'
 
-export interface PolygonToolExtended extends ToolHookReturn {
+export interface PolygonToolExtended extends ToolHookReturn<PolygonToolState> {
   handleFinishPolygon: () => void
   handleUndoPoint: () => void
 }

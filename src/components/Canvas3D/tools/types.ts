@@ -21,17 +21,48 @@ export interface ToolActions {
   onCancel?: () => void
 }
 
-export interface ToolState {
-  // Tool-specific state exposed for rendering
-  [key: string]: unknown
+// Tool-specific state interfaces
+export interface SelectToolState {
+  isDraggingPoint: boolean
 }
+
+export interface PolygonToolState {
+  currentPoints: THREE.Vector3[]
+  currentColor: string
+  canFinish: boolean
+  canUndo: boolean
+}
+
+export interface LineToolState {
+  selectedLinePoints: { polygonId: string; pointIndex: number } | null
+}
+
+export interface BodyToolState {
+  // Body tool has no exposed state
+}
+
+export interface MeasureToolState {
+  measurePoints: THREE.Vector3[]
+  knownLength: number
+  calculatedPixelsPerMeter: number | null
+  copyFeedback: boolean
+  showPanel: boolean
+}
+
+// Union of all tool states for generic use
+export type ToolState =
+  | SelectToolState
+  | PolygonToolState
+  | LineToolState
+  | BodyToolState
+  | MeasureToolState
 
 export interface ToolRender {
   statusText: string | null
 }
 
-export interface ToolHookReturn {
-  state: ToolState
+export interface ToolHookReturn<TState = ToolState> {
+  state: TState
   actions: ToolActions
   render: ToolRender
 }

@@ -8,5 +8,15 @@ export type { BodyToolExtended } from './BodyTool/useBodyTool'
 export { useMeasureTool } from './MeasureTool'
 export type { MeasureToolExtended } from './MeasureTool/useMeasureTool'
 export { useToolManager } from './useToolManager'
-export type { ToolManagerReturn } from './useToolManager'
-export type { ToolActions, ToolRender, ToolHookReturn, ToolState } from './types'
+export type { ToolManagerReturn, ToolManagerHandlers } from './useToolManager'
+export type {
+  ToolActions,
+  ToolRender,
+  ToolHookReturn,
+  ToolState,
+  SelectToolState,
+  PolygonToolState,
+  LineToolState,
+  BodyToolState,
+  MeasureToolState,
+} from './types'

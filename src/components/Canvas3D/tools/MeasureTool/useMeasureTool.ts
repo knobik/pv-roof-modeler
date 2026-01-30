@@ -1,11 +1,11 @@
 import { useCallback, useMemo } from 'react'
 import * as THREE from 'three'
-import type { ToolHookReturn } from '../types'
+import type { ToolHookReturn, MeasureToolState } from '../types'
 import { PLANE_WIDTH } from '../../constants'
 import { useCanvasContext } from '../../context/CanvasContext'
 import { useToolContext } from '../../context/ToolContext'
 
-export interface MeasureToolExtended extends ToolHookReturn {
+export interface MeasureToolExtended extends ToolHookReturn<MeasureToolState> {
   setKnownLength: (length: number) => void
   handleCopyPixelsPerMeter: () => void
   handleClearMeasurement: () => void

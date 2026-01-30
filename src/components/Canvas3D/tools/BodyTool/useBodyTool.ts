@@ -1,9 +1,9 @@
 import { useCallback } from 'react'
-import type { ToolHookReturn } from '../types'
+import type { ToolHookReturn, BodyToolState } from '../types'
 import type { Body } from '../../types'
 import { useCanvasContext } from '../../context/CanvasContext'
 
-export interface BodyToolExtended extends ToolHookReturn {
+export interface BodyToolExtended extends ToolHookReturn<BodyToolState> {
   handleDeleteBody: (bodyId: string) => void
 }
 

@@ -1,9 +1,9 @@
 import { useCallback } from 'react'
 import * as THREE from 'three'
-import type { ToolHookReturn } from '../types'
+import type { ToolHookReturn, SelectToolState } from '../types'
 import { useCanvasContext } from '../../context/CanvasContext'
 
-export interface SelectToolExtended extends ToolHookReturn {
+export interface SelectToolExtended extends ToolHookReturn<SelectToolState> {
   onPointDelete: (polygonId: string, pointIndex: number) => void
 }
 
@@ -11,8 +11,8 @@ export function useSelectTool(): SelectToolExtended {
   const {
     polygons,
     setPolygons,
-    internalPolygons,
     setInternalPolygons,
+    commitPolygons,
     historyContext,
     isDraggingPoint,
     setIsDraggingPoint,
@@ -45,9 +45,9 @@ export function useSelectTool(): SelectToolExtended {
   const onPointDragEnd = useCallback(() => {
     setIsDraggingPoint(false)
     historyContext?.endBatch()
-    // Propagate the internal state to external
-    setPolygons(internalPolygons)
-  }, [setIsDraggingPoint, historyContext, setPolygons, internalPolygons])
+    // Propagate the internal state to external (uses callback to avoid stale closure)
+    commitPolygons()
+  }, [setIsDraggingPoint, historyContext, commitPolygons])
 
   // Point delete handler
   const onPointDelete = useCallback(

@@ -192,10 +192,8 @@ function Canvas3DInner({
     }
   }, [imageUrl])
 
-  // Get handlers with delete from tool manager
-  const handlers = toolManager.handlers as typeof toolManager.handlers & {
-    onPointDelete?: (polygonId: string, pointIndex: number) => void
-  }
+  // Get handlers from tool manager (properly typed now)
+  const handlers = toolManager.handlers
 
   return (
     <div
@@ -296,9 +294,9 @@ function Canvas3DInner({
       {isMeasuring && (
         <MeasurePanel
           show={toolManager.measurePoints.length === 2}
-          knownLength={toolManager.measureTool.state.knownLength as number}
-          calculatedPixelsPerMeter={toolManager.measureTool.state.calculatedPixelsPerMeter as number | null}
-          copyFeedback={toolManager.measureTool.state.copyFeedback as boolean}
+          knownLength={toolManager.measureTool.state.knownLength}
+          calculatedPixelsPerMeter={toolManager.measureTool.state.calculatedPixelsPerMeter}
+          copyFeedback={toolManager.measureTool.state.copyFeedback}
           onKnownLengthChange={toolManager.measureTool.setKnownLength}
           onCopy={toolManager.measureTool.handleCopyPixelsPerMeter}
           onClear={toolManager.measureTool.handleClearMeasurement}

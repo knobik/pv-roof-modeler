@@ -17,6 +17,8 @@ export interface CanvasContextValue {
   setPolygons: (polygons: Polygon[]) => void
   internalPolygons: Polygon[]
   setInternalPolygons: React.Dispatch<React.SetStateAction<Polygon[]>>
+  /** Commits current internal polygons to external state (for drag end) */
+  commitPolygons: () => void
 
   // Body state
   bodies: Body[]
@@ -136,6 +138,14 @@ export function CanvasProvider({
     [isBodiesControlled, onBodiesChange]
   )
 
+  // Commit current internal polygons to external state (used at drag end to avoid stale closures)
+  const commitPolygons = useCallback(() => {
+    setInternalPolygons((current) => {
+      onPolygonsChange?.(current)
+      return current
+    })
+  }, [onPolygonsChange])
+
   const value = useMemo<CanvasContextValue>(() => ({
     imageUrl,
     setImageUrl,
@@ -147,6 +157,7 @@ export function CanvasProvider({
     setPolygons,
     internalPolygons,
     setInternalPolygons,
+    commitPolygons,
     bodies,
     setBodies,
     historyContext,
@@ -160,6 +171,7 @@ export function CanvasProvider({
     polygons,
     setPolygons,
     internalPolygons,
+    commitPolygons,
     bodies,
     setBodies,
     historyContext,
