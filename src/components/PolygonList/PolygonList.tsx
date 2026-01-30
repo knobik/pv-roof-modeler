@@ -16,9 +16,11 @@ export interface PolygonListProps {
   onSelectPolygon?: (polygonId: string | null) => void
   onDeletePolygon?: (polygonId: string) => void
   onPolygonColorChange?: (polygonId: string, color: string) => void
+  onPolygonVisibilityChange?: (polygonId: string, visible: boolean) => void
   onDeleteBody?: (bodyId: string) => void
   onBodyColorChange?: (bodyId: string, color: string) => void
   onBodyHeightChange?: (bodyId: string, height: number) => void
+  onBodyVisibilityChange?: (bodyId: string, visible: boolean) => void
 }
 
 const IconTrash = () => (
@@ -54,6 +56,20 @@ const IconChevron = ({ expanded }: { expanded: boolean }) => (
   </svg>
 )
 
+const IconEye = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+)
+
+const IconEyeOff = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" />
+    <line x1="1" y1="1" x2="23" y2="23" />
+  </svg>
+)
+
 export function PolygonList({
   polygons,
   bodies = [],
@@ -63,9 +79,11 @@ export function PolygonList({
   onSelectPolygon,
   onDeletePolygon,
   onPolygonColorChange,
+  onPolygonVisibilityChange,
   onDeleteBody,
   onBodyColorChange,
   onBodyHeightChange,
+  onBodyVisibilityChange,
 }: PolygonListProps) {
   // Track collapsed items instead of expanded - this way items start expanded by default
   const [collapsedPolygons, setCollapsedPolygons] = useState<Set<string>>(new Set())
@@ -162,6 +180,22 @@ export function PolygonList({
     [onBodyHeightChange, metersToUnits]
   )
 
+  const handlePolygonVisibilityToggle = useCallback(
+    (e: React.MouseEvent, polygonId: string, currentVisible: boolean) => {
+      e.stopPropagation()
+      onPolygonVisibilityChange?.(polygonId, !currentVisible)
+    },
+    [onPolygonVisibilityChange]
+  )
+
+  const handleBodyVisibilityToggle = useCallback(
+    (e: React.MouseEvent, bodyId: string, currentVisible: boolean) => {
+      e.stopPropagation()
+      onBodyVisibilityChange?.(bodyId, !currentVisible)
+    },
+    [onBodyVisibilityChange]
+  )
+
   const getBodiesForPolygon = useCallback(
     (polygonId: string) => bodies.filter((b) => b.polygonId === polygonId),
     [bodies]
@@ -233,6 +267,13 @@ export function PolygonList({
                   title="Change color"
                 />
                 <button
+                  className={`polygon-list-item-visibility ${polygon.visible === false ? 'polygon-list-item-visibility--hidden' : ''}`}
+                  onClick={(e) => handlePolygonVisibilityToggle(e, polygon.id, polygon.visible !== false)}
+                  title={polygon.visible === false ? 'Show polygon' : 'Hide polygon'}
+                >
+                  {polygon.visible === false ? <IconEyeOff /> : <IconEye />}
+                </button>
+                <button
                   className="polygon-list-item-delete"
                   onClick={(e) => handleDelete(e, polygon.id)}
                   title="Delete polygon"
@@ -260,6 +301,13 @@ export function PolygonList({
                           onClick={(e) => e.stopPropagation()}
                           title="Change color"
                         />
+                        <button
+                          className={`polygon-list-item-visibility ${body.visible === false ? 'polygon-list-item-visibility--hidden' : ''}`}
+                          onClick={(e) => handleBodyVisibilityToggle(e, body.id, body.visible !== false)}
+                          title={body.visible === false ? 'Show body' : 'Hide body'}
+                        >
+                          {body.visible === false ? <IconEyeOff /> : <IconEye />}
+                        </button>
                         <button
                           className="polygon-list-item-delete"
                           onClick={(e) => handleBodyDelete(e, body.id)}

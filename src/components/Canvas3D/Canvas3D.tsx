@@ -11,6 +11,7 @@ export interface Polygon {
   points: THREE.Vector3[]
   color: string
   lines: [number, number][]  // pairs of point indices that form internal lines
+  visible?: boolean  // whether the polygon is visible in the editor (default: true)
 }
 
 export interface Body {
@@ -19,6 +20,7 @@ export interface Body {
   points: THREE.Vector3[]  // base points (from polygon)
   height: number
   color: string
+  visible?: boolean  // whether the body is visible in the editor (default: true)
 }
 
 export interface Canvas3DProps {
@@ -629,17 +631,22 @@ interface BuildingBodiesProps {
 function BuildingBodies({ bodies, isAddingBody, imageUrl, aspectRatio, castShadow, onDeleteBody }: BuildingBodiesProps) {
   return (
     <>
-      {bodies.map((body) => (
-        <BuildingBody
-          key={body.id}
-          body={body}
-          isAddingBody={isAddingBody}
-          imageUrl={imageUrl}
-          aspectRatio={aspectRatio}
-          castShadow={castShadow}
-          onDelete={() => onDeleteBody(body.id)}
-        />
-      ))}
+      {bodies.map((body) => {
+        // Skip hidden bodies
+        if (body.visible === false) return null
+
+        return (
+          <BuildingBody
+            key={body.id}
+            body={body}
+            isAddingBody={isAddingBody}
+            imageUrl={imageUrl}
+            aspectRatio={aspectRatio}
+            castShadow={castShadow}
+            onDelete={() => onDeleteBody(body.id)}
+          />
+        )
+      })}
     </>
   )
 }
@@ -682,6 +689,9 @@ function PolygonOutlines({
   return (
     <>
       {polygons.map((polygon) => {
+        // Skip hidden polygons
+        if (polygon.visible === false) return null
+
         const canDeletePoints = polygon.points.length > 3
 
         return (

@@ -304,6 +304,39 @@ function PVRoofModelerInner({
     []
   )
 
+  // Visibility handlers
+  const handlePolygonVisibilityChange = useCallback(
+    (polygonId: string, visible: boolean) => {
+      const newPolygons = polygons.map((p) =>
+        p.id === polygonId ? { ...p, visible } : p
+      )
+
+      if (history && !isPolygonsControlled) {
+        history.setPolygons(newPolygons)
+      } else if (!isPolygonsControlled) {
+        setInternalPolygons(newPolygons)
+      }
+      onPolygonsChange?.(newPolygons)
+    },
+    [polygons, history, isPolygonsControlled, onPolygonsChange]
+  )
+
+  const handleBodyVisibilityChange = useCallback(
+    (bodyId: string, visible: boolean) => {
+      const newBodies = bodies.map((b) =>
+        b.id === bodyId ? { ...b, visible } : b
+      )
+
+      if (history && !isBodiesControlled) {
+        history.setBodies(newBodies)
+      } else if (!isBodiesControlled) {
+        setInternalBodies(newBodies)
+      }
+      onBodiesChange?.(newBodies)
+    },
+    [bodies, history, isBodiesControlled, onBodiesChange]
+  )
+
   const sidebar = !hideSidebar && (
     <div
       className="pv-roof-modeler-sidebar"
@@ -318,9 +351,11 @@ function PVRoofModelerInner({
         onSelectPolygon={handleSelectPolygon}
         onDeletePolygon={handleDeletePolygon}
         onPolygonColorChange={handlePolygonColorChange}
+        onPolygonVisibilityChange={handlePolygonVisibilityChange}
         onDeleteBody={handleDeleteBody}
         onBodyColorChange={handleBodyColorChange}
         onBodyHeightChange={handleBodyHeightChange}
+        onBodyVisibilityChange={handleBodyVisibilityChange}
       />
     </div>
   )

@@ -169,9 +169,11 @@ Hierarchical list component for managing polygons and bodies.
 | `onSelectPolygon` | `(id: string \| null) => void` | Selection callback |
 | `onDeletePolygon` | `(id: string) => void` | Delete polygon callback |
 | `onPolygonColorChange` | `(id: string, color: string) => void` | Polygon color change callback |
+| `onPolygonVisibilityChange` | `(id: string, visible: boolean) => void` | Polygon visibility toggle callback |
 | `onDeleteBody` | `(id: string) => void` | Delete body callback |
 | `onBodyColorChange` | `(id: string, color: string) => void` | Body color change callback |
 | `onBodyHeightChange` | `(id: string, height: number) => void` | Body height change callback (height in Three.js units) |
+| `onBodyVisibilityChange` | `(id: string, visible: boolean) => void` | Body visibility toggle callback |
 
 ### Polygon Interface
 
@@ -181,6 +183,7 @@ interface Polygon {
   points: THREE.Vector3[]
   color: string
   lines: [number, number][]  // pairs of point indices for internal lines
+  visible?: boolean  // visibility in editor (default: true)
 }
 ```
 
@@ -193,6 +196,7 @@ interface Body {
   points: THREE.Vector3[]  // base points (synced with polygon)
   height: number  // height in Three.js units (converted to meters in UI when pixelsPerMeter is set)
   color: string
+  visible?: boolean  // visibility in editor (default: true)
 }
 ```
 

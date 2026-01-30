@@ -175,6 +175,39 @@
   height: 16px;
 }
 
+.polygon-list-item-visibility {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.4);
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.polygon-list-item-visibility:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.polygon-list-item-visibility--hidden {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.polygon-list-item-visibility--hidden:hover {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.polygon-list-item-visibility svg {
+  width: 16px;
+  height: 16px;
+}
+
 /* Tree children (bodies) */
 .polygon-list-children {
   background: rgba(0, 0, 0, 0.15);
