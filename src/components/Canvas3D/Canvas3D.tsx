@@ -3,6 +3,7 @@ import { Canvas, useThree, ThreeEvent } from '@react-three/fiber'
 import { OrbitControls, Line } from '@react-three/drei'
 import * as THREE from 'three'
 import SunCalc from 'suncalc'
+import type { HistoryContextValue } from '../../hooks/useHistory'
 import './Canvas3D.css'
 
 export interface Polygon {
@@ -41,6 +42,8 @@ export interface Canvas3DProps {
   longitude?: number
   /** Date for sun position calculation (default: current date) */
   date?: Date
+  /** History context for undo/redo support */
+  historyContext?: HistoryContextValue
   onImageLoad?: (file: File) => void
   onPolygonsChange?: (polygons: Polygon[]) => void
   onBodiesChange?: (bodies: Body[]) => void
@@ -955,13 +958,6 @@ const IconLine = () => (
   </svg>
 )
 
-const IconTrash = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <polyline points="3,6 5,6 21,6" />
-    <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
-  </svg>
-)
-
 const IconBody = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <path d="M12 2L2 7v10l10 5 10-5V7L12 2z" />
@@ -984,6 +980,20 @@ const IconSun = () => (
   </svg>
 )
 
+const IconUndo = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M3 7v6h6" />
+    <path d="M3 13c0-4.97 4.03-9 9-9s9 4.03 9 9-4.03 9-9 9a9 9 0 01-7.5-4" />
+  </svg>
+)
+
+const IconRedo = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M21 7v6h-6" />
+    <path d="M21 13c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9a9 9 0 007.5-4" />
+  </svg>
+)
+
 type Tool = 'select' | 'polygon' | 'line' | 'body'
 
 export function Canvas3D({
@@ -999,6 +1009,7 @@ export function Canvas3D({
   latitude,
   longitude,
   date,
+  historyContext,
   polygons: controlledPolygons,
   bodies: controlledBodies,
   onImageLoad,
@@ -1180,6 +1191,7 @@ export function Canvas3D({
 
   const handleFinishPolygon = useCallback(() => {
     if (currentPoints.length >= 3) {
+      historyContext?.takeSnapshot()
       const newPolygon: Polygon = {
         id: crypto.randomUUID(),
         points: currentPoints,
@@ -1190,7 +1202,7 @@ export function Canvas3D({
     }
     setCurrentPoints([])
     setActiveTool('select')
-  }, [currentPoints, currentColor, polygons, setPolygons])
+  }, [currentPoints, currentColor, polygons, setPolygons, historyContext])
 
   const handleCancelDrawing = useCallback(() => {
     setCurrentPoints([])
@@ -1202,20 +1214,10 @@ export function Canvas3D({
     setCurrentPoints((prev) => prev.slice(0, -1))
   }, [])
 
-  const handleDeleteLastPolygon = useCallback(() => {
-    if (polygons.length === 0) return
-    const lastPolygon = polygons[polygons.length - 1]
-    setPolygons(polygons.slice(0, -1))
-    // Also delete any bodies associated with the deleted polygon
-    const newBodies = bodies.filter((b) => b.polygonId !== lastPolygon.id)
-    if (newBodies.length !== bodies.length) {
-      setBodies(newBodies)
-    }
-  }, [polygons, bodies, setPolygons, setBodies])
-
   const handlePointDragStart = useCallback(() => {
     setIsDraggingPoint(true)
-  }, [])
+    historyContext?.beginBatch()
+  }, [historyContext])
 
   const handlePointDrag = useCallback(
     (polygonId: string, pointIndex: number, newPosition: THREE.Vector3) => {
@@ -1234,35 +1236,52 @@ export function Canvas3D({
 
   const handlePointDragEnd = useCallback(() => {
     setIsDraggingPoint(false)
+    historyContext?.endBatch()
     // Sync with external state on drag end
     onPolygonsChange?.(internalPolygons)
-  }, [internalPolygons, onPolygonsChange])
+  }, [internalPolygons, onPolygonsChange, historyContext])
 
   const handlePointDelete = useCallback(
     (polygonId: string, pointIndex: number) => {
+      const polygon = polygons.find(p => p.id === polygonId)
+      if (!polygon || polygon.points.length <= 3) return
+
+      historyContext?.takeSnapshot()
       const newPolygons = polygons.map((p) => {
         if (p.id !== polygonId) return p
-        if (p.points.length <= 3) return p
         const newPoints = [...p.points]
         newPoints.splice(pointIndex, 1)
-        return { ...p, points: newPoints }
+        // Update line indices after point removal
+        const newLines = (p.lines || [])
+          .filter(([a, b]) => a !== pointIndex && b !== pointIndex)
+          .map(([a, b]) => [
+            a > pointIndex ? a - 1 : a,
+            b > pointIndex ? b - 1 : b,
+          ] as [number, number])
+        return { ...p, points: newPoints, lines: newLines }
       })
       setPolygons(newPolygons)
     },
-    [polygons, setPolygons]
+    [polygons, setPolygons, historyContext]
   )
 
   const handleAddPointOnEdge = useCallback(
     (polygonId: string, edgeIndex: number, position: THREE.Vector3) => {
+      historyContext?.takeSnapshot()
       const newPolygons = polygons.map((p) => {
         if (p.id !== polygonId) return p
         const newPoints = [...p.points]
         newPoints.splice(edgeIndex + 1, 0, position)
-        return { ...p, points: newPoints }
+        // Update line indices after point insertion
+        const newLines = (p.lines || []).map(([a, b]) => [
+          a > edgeIndex ? a + 1 : a,
+          b > edgeIndex ? b + 1 : b,
+        ] as [number, number])
+        return { ...p, points: newPoints, lines: newLines }
       })
       setPolygons(newPolygons)
     },
-    [polygons, setPolygons]
+    [polygons, setPolygons, historyContext]
   )
 
   const handleSelectTool = useCallback((tool: Tool) => {
@@ -1298,6 +1317,7 @@ export function Canvas3D({
 
             if (!lineExists && !isEdge) {
               // Add the line
+              historyContext?.takeSnapshot()
               const newPolygons = polygons.map((p) => {
                 if (p.id !== polygonId) return p
                 const newLines = [...(p.lines || []), [selectedLinePoints.pointIndex, pointIndex] as [number, number]]
@@ -1313,7 +1333,7 @@ export function Canvas3D({
         setSelectedLinePoints({ polygonId, pointIndex })
       }
     },
-    [selectedLinePoints, polygons, setPolygons]
+    [selectedLinePoints, polygons, setPolygons, historyContext]
   )
 
   const handlePolygonClick = useCallback(
@@ -1480,17 +1500,30 @@ export function Canvas3D({
             <span className="canvas3d-tool-tooltip">Add Body (B)</span>
           </button>
 
-          <div className="canvas3d-toolbox-divider" />
+          {historyContext && (
+            <>
+              <div className="canvas3d-toolbox-divider" />
 
-          <button
-            className="canvas3d-tool canvas3d-tool--danger"
-            onClick={handleDeleteLastPolygon}
-            disabled={polygons.length === 0}
-            title="Delete Last Polygon"
-          >
-            <IconTrash />
-            <span className="canvas3d-tool-tooltip">Delete Last</span>
-          </button>
+              <button
+                className="canvas3d-tool"
+                onClick={historyContext.undo}
+                disabled={!historyContext.canUndo}
+                title="Undo (Ctrl+Z)"
+              >
+                <IconUndo />
+                <span className="canvas3d-tool-tooltip">Undo</span>
+              </button>
+              <button
+                className="canvas3d-tool"
+                onClick={historyContext.redo}
+                disabled={!historyContext.canRedo}
+                title="Redo (Ctrl+Shift+Z)"
+              >
+                <IconRedo />
+                <span className="canvas3d-tool-tooltip">Redo</span>
+              </button>
+            </>
+          )}
         </div>
       )}
 

@@ -1,7 +1,9 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { Canvas3D } from '../Canvas3D'
 import type { Canvas3DProps, Polygon, Body } from '../Canvas3D'
 import { PolygonList } from '../PolygonList'
+import { HistoryProvider, useHistoryOptional } from '../../hooks/useHistory'
+import type { HistoryContextValue } from '../../hooks/useHistory'
 import './PVRoofModeler.css'
 
 export interface PVRoofModelerProps {
@@ -37,6 +39,8 @@ export interface PVRoofModelerProps {
   polygons?: Polygon[]
   /** Controlled bodies array */
   bodies?: Body[]
+  /** External history context (for controlled mode with external history management) */
+  historyContext?: HistoryContextValue
   /** Callback when polygons change */
   onPolygonsChange?: (polygons: Polygon[]) => void
   /** Callback when bodies change */
@@ -49,7 +53,11 @@ export interface PVRoofModelerProps {
   onTimeOfDayChange?: (time: number) => void
 }
 
-export function PVRoofModeler({
+interface PVRoofModelerInnerProps extends PVRoofModelerProps {
+  internalHistory: HistoryContextValue | null
+}
+
+function PVRoofModelerInner({
   width = '100%',
   height = 500,
   backgroundColor = '#1a1a2e',
@@ -66,44 +74,103 @@ export function PVRoofModeler({
   hideSidebar = false,
   polygons: controlledPolygons,
   bodies: controlledBodies,
+  historyContext: externalHistory,
   onPolygonsChange,
   onBodiesChange,
   onImageLoad,
   onSelectionChange,
   onTimeOfDayChange,
-}: PVRoofModelerProps) {
-  // Internal state for uncontrolled mode
-  const [internalPolygons, setInternalPolygons] = useState<Polygon[]>([])
-  const [internalBodies, setInternalBodies] = useState<Body[]>([])
+  internalHistory,
+}: PVRoofModelerInnerProps) {
+  const containerRef = useRef<HTMLDivElement>(null)
   const [selectedPolygonId, setSelectedPolygonId] = useState<string | null>(null)
 
-  // Determine controlled vs uncontrolled
+  // Use external history if provided, otherwise use internal
+  const history = externalHistory || internalHistory
+
+  // For uncontrolled mode without external history, use internal history state
+  // For controlled mode, use controlled props
   const isPolygonsControlled = controlledPolygons !== undefined
   const isBodiesControlled = controlledBodies !== undefined
 
-  const polygons = isPolygonsControlled ? controlledPolygons : internalPolygons
-  const bodies = isBodiesControlled ? controlledBodies : internalBodies
+  // Internal state for uncontrolled mode without history
+  const [internalPolygons, setInternalPolygons] = useState<Polygon[]>([])
+  const [internalBodies, setInternalBodies] = useState<Body[]>([])
+
+  // Track if we're currently dragging height slider for batch operations
+  const isDraggingHeightRef = useRef(false)
+
+  // Determine which state to use
+  const polygons = isPolygonsControlled
+    ? controlledPolygons
+    : history
+      ? history.state.polygons
+      : internalPolygons
+
+  const bodies = isBodiesControlled
+    ? controlledBodies
+    : history
+      ? history.state.bodies
+      : internalBodies
+
+  // Keyboard shortcuts for undo/redo
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!history) return
+
+      // Check if we're in an input field
+      const target = e.target as HTMLElement
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return
+
+      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0
+      const isCtrlOrCmd = isMac ? e.metaKey : e.ctrlKey
+
+      if (isCtrlOrCmd && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault()
+        history.undo()
+      } else if (isCtrlOrCmd && e.key === 'z' && e.shiftKey) {
+        e.preventDefault()
+        history.redo()
+      } else if (isCtrlOrCmd && e.key === 'y') {
+        e.preventDefault()
+        history.redo()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [history])
 
   // Polygon handlers
   const handlePolygonsChange = useCallback(
     (newPolygons: Polygon[]) => {
-      if (!isPolygonsControlled) {
+      if (history && !isPolygonsControlled) {
+        history.setPolygons(newPolygons)
+      } else if (!isPolygonsControlled) {
         setInternalPolygons(newPolygons)
       }
       onPolygonsChange?.(newPolygons)
     },
-    [isPolygonsControlled, onPolygonsChange]
+    [history, isPolygonsControlled, onPolygonsChange]
   )
 
   const handleDeletePolygon = useCallback(
     (polygonId: string) => {
+      history?.takeSnapshot()
+
       const newPolygons = polygons.filter((p) => p.id !== polygonId)
-      // Also delete associated bodies
       const newBodies = bodies.filter((b) => b.polygonId !== polygonId)
 
-      handlePolygonsChange(newPolygons)
+      if (history && !isPolygonsControlled) {
+        history.setPolygons(newPolygons)
+      } else if (!isPolygonsControlled) {
+        setInternalPolygons(newPolygons)
+      }
+      onPolygonsChange?.(newPolygons)
 
-      if (!isBodiesControlled) {
+      if (history && !isBodiesControlled) {
+        history.setBodies(newBodies)
+      } else if (!isBodiesControlled) {
         setInternalBodies(newBodies)
       }
       onBodiesChange?.(newBodies)
@@ -113,57 +180,108 @@ export function PVRoofModeler({
         onSelectionChange?.(null)
       }
     },
-    [polygons, bodies, isBodiesControlled, selectedPolygonId, handlePolygonsChange, onBodiesChange, onSelectionChange]
+    [polygons, bodies, history, isPolygonsControlled, isBodiesControlled, selectedPolygonId, onPolygonsChange, onBodiesChange, onSelectionChange]
   )
 
   const handlePolygonColorChange = useCallback(
     (polygonId: string, color: string) => {
+      history?.takeSnapshot()
+
       const newPolygons = polygons.map((p) =>
         p.id === polygonId ? { ...p, color } : p
       )
-      handlePolygonsChange(newPolygons)
+
+      if (history && !isPolygonsControlled) {
+        history.setPolygons(newPolygons)
+      } else if (!isPolygonsControlled) {
+        setInternalPolygons(newPolygons)
+      }
+      onPolygonsChange?.(newPolygons)
     },
-    [polygons, handlePolygonsChange]
+    [polygons, history, isPolygonsControlled, onPolygonsChange]
   )
 
   // Body handlers
   const handleBodiesChange = useCallback(
     (newBodies: Body[]) => {
-      if (!isBodiesControlled) {
+      if (history && !isBodiesControlled) {
+        history.setBodies(newBodies)
+      } else if (!isBodiesControlled) {
         setInternalBodies(newBodies)
       }
       onBodiesChange?.(newBodies)
     },
-    [isBodiesControlled, onBodiesChange]
+    [history, isBodiesControlled, onBodiesChange]
   )
 
   const handleDeleteBody = useCallback(
     (bodyId: string) => {
+      history?.takeSnapshot()
+
       const newBodies = bodies.filter((b) => b.id !== bodyId)
-      handleBodiesChange(newBodies)
+
+      if (history && !isBodiesControlled) {
+        history.setBodies(newBodies)
+      } else if (!isBodiesControlled) {
+        setInternalBodies(newBodies)
+      }
+      onBodiesChange?.(newBodies)
     },
-    [bodies, handleBodiesChange]
+    [bodies, history, isBodiesControlled, onBodiesChange]
   )
 
   const handleBodyColorChange = useCallback(
     (bodyId: string, color: string) => {
+      history?.takeSnapshot()
+
       const newBodies = bodies.map((b) =>
         b.id === bodyId ? { ...b, color } : b
       )
-      handleBodiesChange(newBodies)
+
+      if (history && !isBodiesControlled) {
+        history.setBodies(newBodies)
+      } else if (!isBodiesControlled) {
+        setInternalBodies(newBodies)
+      }
+      onBodiesChange?.(newBodies)
     },
-    [bodies, handleBodiesChange]
+    [bodies, history, isBodiesControlled, onBodiesChange]
   )
 
   const handleBodyHeightChange = useCallback(
     (bodyId: string, height: number) => {
+      // Start batch on first change
+      if (!isDraggingHeightRef.current) {
+        isDraggingHeightRef.current = true
+        history?.beginBatch()
+      }
+
       const newBodies = bodies.map((b) =>
         b.id === bodyId ? { ...b, height } : b
       )
-      handleBodiesChange(newBodies)
+
+      if (history && !isBodiesControlled) {
+        history.setBodies(newBodies)
+      } else if (!isBodiesControlled) {
+        setInternalBodies(newBodies)
+      }
+      onBodiesChange?.(newBodies)
     },
-    [bodies, handleBodiesChange]
+    [bodies, history, isBodiesControlled, onBodiesChange]
   )
+
+  // End batch when mouse is released anywhere
+  useEffect(() => {
+    const handleMouseUp = () => {
+      if (isDraggingHeightRef.current) {
+        isDraggingHeightRef.current = false
+        history?.endBatch()
+      }
+    }
+
+    window.addEventListener('mouseup', handleMouseUp)
+    return () => window.removeEventListener('mouseup', handleMouseUp)
+  }, [history])
 
   // Selection handler
   const handleSelectPolygon = useCallback(
@@ -194,7 +312,7 @@ export function PVRoofModeler({
   )
 
   return (
-    <div className="pv-roof-modeler" style={{ width, height }}>
+    <div ref={containerRef} className="pv-roof-modeler" style={{ width, height }} tabIndex={-1}>
       {sidebarPosition === 'left' && sidebar}
       <div className="pv-roof-modeler-canvas">
         <Canvas3D
@@ -209,6 +327,7 @@ export function PVRoofModeler({
           latitude={latitude}
           longitude={longitude}
           date={date}
+          historyContext={history || undefined}
           polygons={polygons}
           bodies={bodies}
           onPolygonsChange={handlePolygonsChange}
@@ -220,4 +339,26 @@ export function PVRoofModeler({
       {sidebarPosition === 'right' && sidebar}
     </div>
   )
+}
+
+export function PVRoofModeler(props: PVRoofModelerProps) {
+  // If external history is provided or polygons are controlled, don't wrap with provider
+  const hasExternalHistory = props.historyContext !== undefined
+  const isControlled = props.polygons !== undefined
+
+  if (hasExternalHistory || isControlled) {
+    return <PVRoofModelerInner {...props} internalHistory={null} />
+  }
+
+  // Wrap with internal HistoryProvider for uncontrolled mode
+  return (
+    <HistoryProvider>
+      <PVRoofModelerWithHistory {...props} />
+    </HistoryProvider>
+  )
+}
+
+function PVRoofModelerWithHistory(props: PVRoofModelerProps) {
+  const history = useHistoryOptional()
+  return <PVRoofModelerInner {...props} internalHistory={history} />
 }
