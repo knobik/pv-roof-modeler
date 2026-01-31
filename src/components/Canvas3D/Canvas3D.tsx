@@ -77,7 +77,7 @@ interface Canvas3DInnerProps extends Omit<Canvas3DProps, 'polygons' | 'bodies' |
 function Canvas3DInner({
   width = '100%',
   height = 500,
-  backgroundColor = '#1a1a2e',
+  backgroundColor = '#e8e8f0',
   gridSize = 10,
   showGrid = true,
   outlineColor,

@@ -1,11 +1,12 @@
 .history-debugger {
-  background: #1a1a2e;
-  border: 1px solid #333;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 8px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 12px;
-  color: #e0e0e0;
+  color: #333;
   overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .history-debugger-header {
@@ -13,13 +14,13 @@
   justify-content: space-between;
   align-items: center;
   padding: 8px 12px;
-  background: #252542;
-  border-bottom: 1px solid #333;
+  background: rgba(0, 0, 0, 0.03);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .history-debugger-title {
   font-weight: 600;
-  color: #fff;
+  color: #111;
 }
 
 .history-debugger-counts {
@@ -35,7 +36,7 @@
 .history-debugger-empty {
   padding: 16px;
   text-align: center;
-  color: #666;
+  color: #999;
 }
 
 .history-debugger-section {
@@ -49,7 +50,7 @@
 .history-debugger-section-label {
   font-size: 10px;
   text-transform: uppercase;
-  color: #666;
+  color: #999;
   margin-bottom: 4px;
   padding-left: 4px;
 }
@@ -59,7 +60,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 6px 8px;
-  background: #252542;
+  background: rgba(0, 0, 0, 0.02);
   border-radius: 4px;
   margin-bottom: 2px;
 }
@@ -69,8 +70,8 @@
 }
 
 .history-debugger-item--current {
-  background: #2d4a2d;
-  border: 1px solid #4a7c4a;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
 }
 
 .history-debugger-item--clickable {
@@ -79,23 +80,23 @@
 }
 
 .history-debugger-item--clickable:hover {
-  background: #363660;
+  background: rgba(0, 0, 0, 0.05);
 }
 
 .history-debugger-item-label {
   font-weight: 500;
-  color: #aaa;
+  color: #666;
 }
 
 .history-debugger-item--current .history-debugger-item-label {
-  color: #8f8;
+  color: #16a34a;
 }
 
 .history-debugger-item-stats {
-  color: #666;
+  color: #999;
   font-size: 11px;
 }
 
 .history-debugger-item--current .history-debugger-item-stats {
-  color: #6a6;
+  color: #22c55e;
 }

@@ -1,11 +1,11 @@
 .polygon-list {
-  background: rgba(30, 30, 30, 0.95);
+  background: rgba(255, 255, 255, 0.95);
   border-radius: 6px;
   overflow: hidden;
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(0, 0, 0, 0.8);
   min-width: 250px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .polygon-list-header {
@@ -13,13 +13,13 @@
   align-items: center;
   justify-content: space-between;
   padding: 10px 12px;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.03);
   font-weight: 500;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .polygon-list-count {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.08);
   padding: 2px 8px;
   border-radius: 10px;
   font-size: 11px;
@@ -28,7 +28,7 @@
 .polygon-list-empty {
   padding: 20px 12px;
   text-align: center;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(0, 0, 0, 0.4);
   font-size: 12px;
 }
 
@@ -39,7 +39,7 @@
 }
 
 .polygon-list-tree-item {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .polygon-list-tree-item:last-child {
@@ -56,15 +56,15 @@
 }
 
 .polygon-list-item:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.03);
 }
 
 .polygon-list-item--selected {
-  background: rgba(59, 130, 246, 0.2);
+  background: rgba(59, 130, 246, 0.1);
 }
 
 .polygon-list-item--selected:hover {
-  background: rgba(59, 130, 246, 0.3);
+  background: rgba(59, 130, 246, 0.15);
 }
 
 .polygon-list-expand-btn {
@@ -77,12 +77,12 @@
   border: none;
   padding: 0;
   cursor: pointer;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(0, 0, 0, 0.4);
   flex-shrink: 0;
 }
 
 .polygon-list-expand-btn:hover {
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(0, 0, 0, 0.7);
 }
 
 .polygon-list-expand-placeholder {
@@ -103,7 +103,7 @@
 .polygon-list-item-icon {
   width: 20px;
   height: 20px;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(0, 0, 0, 0.5);
   flex-shrink: 0;
 }
 
@@ -126,7 +126,7 @@
 
 .polygon-list-item-meta {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(0, 0, 0, 0.4);
   margin-top: 2px;
 }
 
@@ -134,7 +134,7 @@
   width: 24px;
   height: 24px;
   padding: 0;
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(0, 0, 0, 0.15);
   border-radius: 4px;
   cursor: pointer;
   background: none;
@@ -160,13 +160,13 @@
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(0, 0, 0, 0.3);
   transition: all 0.15s;
   flex-shrink: 0;
 }
 
 .polygon-list-item-delete:hover {
-  background: rgba(239, 68, 68, 0.2);
+  background: rgba(239, 68, 68, 0.1);
   color: rgba(239, 68, 68, 1);
 }
 
@@ -185,22 +185,22 @@
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(0, 0, 0, 0.3);
   transition: all 0.15s;
   flex-shrink: 0;
 }
 
 .polygon-list-item-visibility:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.8);
+  background: rgba(0, 0, 0, 0.05);
+  color: rgba(0, 0, 0, 0.6);
 }
 
 .polygon-list-item-visibility--hidden {
-  color: rgba(255, 255, 255, 0.2);
+  color: rgba(0, 0, 0, 0.15);
 }
 
 .polygon-list-item-visibility--hidden:hover {
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(0, 0, 0, 0.4);
 }
 
 .polygon-list-item-visibility svg {
@@ -210,13 +210,13 @@
 
 /* Tree children (bodies) */
 .polygon-list-children {
-  background: rgba(0, 0, 0, 0.15);
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.02);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .polygon-list-body-item {
   padding: 10px 12px 10px 38px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.03);
 }
 
 .polygon-list-body-item:last-child {
@@ -232,7 +232,7 @@
 .polygon-list-body-icon {
   width: 18px;
   height: 18px;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(0, 0, 0, 0.4);
   flex-shrink: 0;
 }
 
@@ -265,7 +265,7 @@
 
 .polygon-list-body-height-label {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(0, 0, 0, 0.4);
   flex-shrink: 0;
   white-space: nowrap;
 }
@@ -276,7 +276,7 @@
   height: 4px;
   -webkit-appearance: none;
   appearance: none;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.1);
   border-radius: 2px;
   outline: none;
   cursor: pointer;
@@ -314,10 +314,10 @@
 .polygon-list-body-height-input {
   width: 55px;
   padding: 4px 5px;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 4px;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(0, 0, 0, 0.8);
   font-size: 11px;
   text-align: right;
   flex-shrink: 0;

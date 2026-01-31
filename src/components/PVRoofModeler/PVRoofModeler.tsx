@@ -64,7 +64,7 @@ interface PVRoofModelerInnerProps extends PVRoofModelerProps {
 function PVRoofModelerInner({
   width = '100%',
   height = 500,
-  backgroundColor = '#1a1a2e',
+  backgroundColor = '#e8e8f0',
   gridSize = 10,
   showGrid = true,
   shadows = true,
