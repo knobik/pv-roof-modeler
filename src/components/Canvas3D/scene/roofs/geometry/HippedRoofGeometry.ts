@@ -14,7 +14,7 @@ export function createHippedRoofGeometry(params: RoofGeometryParams): RoofGeomet
 
   // If the polygon is nearly square, use tented (pyramidal) approach
   const aspectRatio = length / width
-  if (aspectRatio < 1.3) {
+  if (aspectRatio < 1.05) {
     // Nearly square - use pyramidal roof (all edges to center peak)
     return createPyramidalRoof(points, wallHeight, ridgeY, centroid)
   }
