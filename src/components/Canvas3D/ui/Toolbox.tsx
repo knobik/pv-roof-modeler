@@ -1,6 +1,6 @@
 import type { ToolName } from '../types'
 import type { HistoryContextValue } from '../../../hooks/useHistory'
-import { IconCursor, IconPolygon, IconLine, IconBuilding, IconCalibration, IconMeasurement, IconUndo, IconRedo } from './Icons'
+import { IconCursor, IconPolygon, IconLine, IconBuilding, IconCalibration, IconMeasurement, IconPerpendicular, IconUndo, IconRedo } from './Icons'
 
 export interface ToolboxProps {
   activeTool: ToolName
@@ -42,6 +42,15 @@ export function Toolbox({
       >
         <IconLine />
         <span className="canvas3d-tool-tooltip">Add Line (L)</span>
+      </button>
+      <button
+        className={`canvas3d-tool ${activeTool === 'perpendicular' ? 'canvas3d-tool--active' : ''}`}
+        onClick={() => onSelectTool('perpendicular')}
+        disabled={polygonsCount === 0}
+        title="Perpendicular Constraint"
+      >
+        <IconPerpendicular />
+        <span className="canvas3d-tool-tooltip">Perpendicular (R)</span>
       </button>
       <button
         className={`canvas3d-tool ${activeTool === 'building' ? 'canvas3d-tool--active' : ''}`}

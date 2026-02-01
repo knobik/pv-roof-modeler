@@ -30,4 +30,4 @@ export interface Building {
   roofRotation?: number // roof rotation in degrees (default: 0)
 }
 
-export type ToolName = 'select' | 'polygon' | 'line' | 'building' | 'calibration' | 'measurement'
+export type ToolName = 'select' | 'polygon' | 'line' | 'building' | 'calibration' | 'measurement' | 'perpendicular'

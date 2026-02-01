@@ -24,11 +24,13 @@ export interface SceneProps {
   isAddingPolygon: boolean
   isAddingLine: boolean
   isAddingBuilding: boolean
+  isPerpendicular: boolean
   isCalibrating: boolean
   isMeasuring: boolean
   calibrationPoints: THREE.Vector3[]
   measurementPoints: THREE.Vector3[]
   selectedLinePoints: { polygonId: string; pointIndex: number } | null
+  perpendicularPreview: { polygonId: string; pointIndex: number; previewPoints: THREE.Vector3[] } | null
   polygons: Polygon[]
   buildings: Building[]
   currentPoints: THREE.Vector3[]
@@ -67,11 +69,13 @@ export function Scene({
   isAddingPolygon,
   isAddingLine,
   isAddingBuilding,
+  isPerpendicular,
   isCalibrating,
   isMeasuring,
   calibrationPoints,
   measurementPoints,
   selectedLinePoints,
+  perpendicularPreview,
   polygons,
   buildings,
   currentPoints,
@@ -95,7 +99,7 @@ export function Scene({
   isDraggingPoint,
   onCompassRotationChange,
 }: SceneProps) {
-  const orbitEnabled = !isAddingPolygon && !isAddingLine && !isAddingBuilding && !isCalibrating && !isMeasuring && !isDraggingPoint
+  const orbitEnabled = !isAddingPolygon && !isAddingLine && !isAddingBuilding && !isPerpendicular && !isCalibrating && !isMeasuring && !isDraggingPoint
 
   // Ambient light intensity adjusts based on time of day
   const ambientIntensity = useMemo(() => {
@@ -160,7 +164,9 @@ export function Scene({
         currentColor={currentColor}
         isAddingLine={isAddingLine}
         isAddingBuilding={isAddingBuilding}
+        isPerpendicular={isPerpendicular}
         selectedLinePoints={selectedLinePoints}
+        perpendicularPreview={perpendicularPreview}
         pixelsPerMeter={pixelsPerMeter}
         imageWidth={imageWidth}
         planeWidth={planeWidth}

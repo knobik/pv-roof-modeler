@@ -8,6 +8,7 @@ import { useLineTool } from './LineTool/useLineTool'
 import { useBuildingTool, type BuildingToolExtended } from './BuildingTool/useBuildingTool'
 import { useCalibrationTool, type CalibrationToolExtended } from './CalibrationTool/useCalibrationTool'
 import { useMeasurementTool, type MeasurementToolExtended } from './MeasurementTool/useMeasurementTool'
+import { usePerpendicularTool, type PerpendicularToolExtended } from './PerpendicularTool/usePerpendicularTool'
 import { useToolContext } from '../context/ToolContext'
 import { useCanvasContext } from '../context/CanvasContext'
 
@@ -15,6 +16,7 @@ export type { PolygonToolExtended } from './PolygonTool/usePolygonTool'
 export type { BuildingToolExtended } from './BuildingTool/useBuildingTool'
 export type { CalibrationToolExtended } from './CalibrationTool/useCalibrationTool'
 export type { MeasurementToolExtended } from './MeasurementTool/useMeasurementTool'
+export type { PerpendicularToolExtended } from './PerpendicularTool/usePerpendicularTool'
 export type { SelectToolExtended } from './SelectTool/useSelectTool'
 
 export interface ToolManagerHandlers extends ToolActions {
@@ -50,6 +52,7 @@ export interface ToolManagerReturn {
   buildingTool: BuildingToolExtended
   calibrationTool: CalibrationToolExtended
   measurementTool: MeasurementToolExtended
+  perpendicularTool: PerpendicularToolExtended
 }
 
 export function useToolManager(): ToolManagerReturn {
@@ -74,6 +77,7 @@ export function useToolManager(): ToolManagerReturn {
   const buildingTool = useBuildingTool()
   const calibrationTool = useCalibrationTool()
   const measurementTool = useMeasurementTool()
+  const perpendicularTool = usePerpendicularTool()
 
   // Tool lookup by name
   const tools = useMemo(() => ({
@@ -83,7 +87,8 @@ export function useToolManager(): ToolManagerReturn {
     building: buildingTool,
     calibration: calibrationTool,
     measurement: measurementTool,
-  }), [selectTool, polygonTool, lineTool, buildingTool, calibrationTool, measurementTool])
+    perpendicular: perpendicularTool,
+  }), [selectTool, polygonTool, lineTool, buildingTool, calibrationTool, measurementTool, perpendicularTool])
 
   const getToolByName = useCallback((name: ToolName): ToolHookReturn<ToolState> => {
     return tools[name]
@@ -124,10 +129,12 @@ export function useToolManager(): ToolManagerReturn {
       }
     },
 
-    // Point click - line tool
+    // Point click - line tool and perpendicular tool
     onPointClick: (polygonId: string, pointIndex: number) => {
       if (activeTool === 'line') {
         lineTool.actions.onPointClick?.(polygonId, pointIndex)
+      } else if (activeTool === 'perpendicular') {
+        perpendicularTool.actions.onPointClick?.(polygonId, pointIndex)
       }
     },
 
@@ -192,19 +199,22 @@ export function useToolManager(): ToolManagerReturn {
     buildingTool,
     calibrationTool,
     measurementTool,
+    perpendicularTool,
     setActiveTool,
   ])
 
-  // Escape key handling
+  // Keyboard handling
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         handlers.onCancel?.()
+      } else if (e.key === 'Enter' && activeTool === 'perpendicular') {
+        perpendicularTool.applyConstraint()
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [handlers])
+  }, [handlers, activeTool, perpendicularTool])
 
   // Computed flags
   const isDrawing = activeTool === 'polygon' || activeTool === 'calibration' || activeTool === 'measurement'
@@ -231,5 +241,6 @@ export function useToolManager(): ToolManagerReturn {
     buildingTool,
     calibrationTool,
     measurementTool,
+    perpendicularTool,
   }
 }

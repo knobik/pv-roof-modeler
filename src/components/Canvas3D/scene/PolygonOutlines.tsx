@@ -9,7 +9,9 @@ export interface PolygonOutlinesProps {
   currentColor: string
   isAddingLine: boolean
   isAddingBuilding: boolean
+  isPerpendicular: boolean
   selectedLinePoints: { polygonId: string; pointIndex: number } | null
+  perpendicularPreview: { polygonId: string; pointIndex: number; previewPoints: THREE.Vector3[] } | null
   pixelsPerMeter: number | null
   imageWidth: number | null
   planeWidth: number
@@ -29,7 +31,9 @@ export function PolygonOutlines({
   currentColor,
   isAddingLine,
   isAddingBuilding,
+  isPerpendicular,
   selectedLinePoints,
+  perpendicularPreview,
   pixelsPerMeter,
   imageWidth,
   planeWidth,
@@ -107,9 +111,13 @@ export function PolygonOutlines({
             {polygon.points.map((point, i) => {
               const nextIndex = (i + 1) % polygon.points.length
               const nextPoint = polygon.points[nextIndex]
-              const isSelected =
+              const isSelectedForLine =
                 selectedLinePoints?.polygonId === polygon.id &&
                 selectedLinePoints?.pointIndex === i
+              const isSelectedForPerpendicular =
+                perpendicularPreview?.polygonId === polygon.id &&
+                perpendicularPreview?.pointIndex === i
+              const isSelected = isSelectedForLine || isSelectedForPerpendicular
 
               return (
                 <group key={`${polygon.id}-${i}`}>
@@ -117,7 +125,7 @@ export function PolygonOutlines({
                     position={point}
                     color={polygon.color}
                     canDelete={canDeletePoints}
-                    isSelectMode={isAddingLine}
+                    isSelectMode={isAddingLine || isPerpendicular}
                     isSelected={isSelected}
                     onDragStart={onPointDragStart}
                     onDrag={(newPos) => onPointDrag(polygon.id, i, newPos)}
@@ -125,7 +133,7 @@ export function PolygonOutlines({
                     onDelete={() => onPointDelete(polygon.id, i)}
                     onSelect={() => onPointSelect(polygon.id, i)}
                   />
-                  {!isAddingLine && !isAddingBuilding && (
+                  {!isAddingLine && !isAddingBuilding && !isPerpendicular && (
                     <ClickableEdge
                       start={point}
                       end={nextPoint}
@@ -139,6 +147,18 @@ export function PolygonOutlines({
           </group>
         )
       })}
+
+      {/* Perpendicular preview outline */}
+      {perpendicularPreview && perpendicularPreview.previewPoints.length >= 3 && (
+        <Line
+          points={[...perpendicularPreview.previewPoints, perpendicularPreview.previewPoints[0]]}
+          color="#00ff00"
+          lineWidth={2}
+          dashed
+          dashSize={0.05}
+          gapSize={0.03}
+        />
+      )}
 
       {currentPoints.length >= 2 && (
         <Line points={currentPoints} color={currentColor} lineWidth={2} />

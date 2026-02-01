@@ -114,6 +114,7 @@ function Canvas3DInner({
   const isAddingPolygon = toolManager.activeTool === 'polygon'
   const isAddingLine = toolManager.activeTool === 'line'
   const isAddingBuilding = toolManager.activeTool === 'building'
+  const isPerpendicular = toolManager.activeTool === 'perpendicular'
   const isCalibrating = toolManager.activeTool === 'calibration'
   const isMeasuring = toolManager.activeTool === 'measurement'
 
@@ -238,11 +239,22 @@ function Canvas3DInner({
           isAddingPolygon={isAddingPolygon}
           isAddingLine={isAddingLine}
           isAddingBuilding={isAddingBuilding}
+          isPerpendicular={isPerpendicular}
           isCalibrating={isCalibrating}
           isMeasuring={isMeasuring}
           calibrationPoints={toolManager.calibrationPoints}
           measurementPoints={toolManager.measurementPoints}
           selectedLinePoints={toolManager.selectedLinePoints}
+          perpendicularPreview={
+            toolManager.perpendicularTool.state.selectedVertexInfo &&
+            toolManager.perpendicularTool.state.previewPoints
+              ? {
+                  polygonId: toolManager.perpendicularTool.state.selectedVertexInfo.polygonId,
+                  pointIndex: toolManager.perpendicularTool.state.selectedVertexInfo.pointIndex,
+                  previewPoints: toolManager.perpendicularTool.state.previewPoints,
+                }
+              : null
+          }
           polygons={polygons}
           buildings={buildings}
           currentPoints={toolManager.currentPoints}

@@ -56,6 +56,11 @@ export interface MeasurementToolState {
   showPanel: boolean
 }
 
+export interface PerpendicularToolState {
+  selectedVertexInfo: { polygonId: string; pointIndex: number } | null
+  previewPoints: THREE.Vector3[] | null
+}
+
 // Union of all tool states for generic use
 export type ToolState =
   | SelectToolState
@@ -64,6 +69,7 @@ export type ToolState =
   | BuildingToolState
   | CalibrationToolState
   | MeasurementToolState
+  | PerpendicularToolState
 
 export interface ToolRender {
   statusText: string | null
