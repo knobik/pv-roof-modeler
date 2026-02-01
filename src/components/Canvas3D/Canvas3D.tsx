@@ -2,7 +2,7 @@ import { useRef, useState, useCallback } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import type { HistoryContextValue } from '../../hooks/useHistory'
-import type { Polygon, Body } from './types'
+import type { Polygon, Building } from './types'
 import { Scene } from './scene'
 import { Toolbox, StatusBar, PolygonActions, CalibrationPanel, MeasurementPanel, TimeControl, CompassDisplay } from './ui'
 import { CanvasProvider, useCanvasContext, ToolProvider } from './context'
@@ -10,7 +10,7 @@ import { useToolManager } from './tools'
 import './Canvas3D.css'
 
 // Re-export types for backwards compatibility
-export type { Polygon, Body } from './types'
+export type { Polygon, Building } from './types'
 
 export interface Canvas3DProps {
   width?: number | string
@@ -20,8 +20,8 @@ export interface Canvas3DProps {
   showGrid?: boolean
   outlineColor?: string
   polygons?: Polygon[]
-  bodies?: Body[]
-  /** Enable shadow casting for bodies (default: true) */
+  buildings?: Building[]
+  /** Enable shadow casting for buildings (default: true) */
   shadows?: boolean
   /** Time of day in hours (0-24), affects sun position and shadows (default: 10) */
   timeOfDay?: number
@@ -40,7 +40,7 @@ export interface Canvas3DProps {
   onImageLoad?: (file: File) => void
   onImageDimensionsChange?: (width: number, height: number) => void
   onPolygonsChange?: (polygons: Polygon[]) => void
-  onBodiesChange?: (bodies: Body[]) => void
+  onBuildingsChange?: (buildings: Building[]) => void
   onTimeOfDayChange?: (time: number) => void
   onPixelsPerMeterChange?: (pixelsPerMeter: number) => void
 }
@@ -48,22 +48,22 @@ export interface Canvas3DProps {
 export function Canvas3D(props: Canvas3DProps) {
   const {
     polygons: controlledPolygons,
-    bodies: controlledBodies,
+    buildings: controlledBuildings,
     historyContext,
     pixelsPerMeter,
     onPolygonsChange,
-    onBodiesChange,
+    onBuildingsChange,
     ...restProps
   } = props
 
   return (
     <CanvasProvider
       controlledPolygons={controlledPolygons}
-      controlledBodies={controlledBodies}
+      controlledBuildings={controlledBuildings}
       historyContext={historyContext}
       pixelsPerMeter={pixelsPerMeter}
       onPolygonsChange={onPolygonsChange}
-      onBodiesChange={onBodiesChange}
+      onBuildingsChange={onBuildingsChange}
     >
       <ToolProvider>
         <Canvas3DInner {...restProps} historyContext={historyContext} />
@@ -101,7 +101,7 @@ function Canvas3DInner({
     setImageWidth,
     imageWidth,
     polygons,
-    bodies,
+    buildings,
     isDraggingPoint,
     pixelsPerMeter,
     planeWidth,
@@ -113,7 +113,7 @@ function Canvas3DInner({
   // Derive tool flags from active tool
   const isAddingPolygon = toolManager.activeTool === 'polygon'
   const isAddingLine = toolManager.activeTool === 'line'
-  const isAddingBody = toolManager.activeTool === 'body'
+  const isAddingBuilding = toolManager.activeTool === 'building'
   const isCalibrating = toolManager.activeTool === 'calibration'
   const isMeasuring = toolManager.activeTool === 'measurement'
 
@@ -237,14 +237,14 @@ function Canvas3DInner({
           date={date}
           isAddingPolygon={isAddingPolygon}
           isAddingLine={isAddingLine}
-          isAddingBody={isAddingBody}
+          isAddingBuilding={isAddingBuilding}
           isCalibrating={isCalibrating}
           isMeasuring={isMeasuring}
           calibrationPoints={toolManager.calibrationPoints}
           measurementPoints={toolManager.measurementPoints}
           selectedLinePoints={toolManager.selectedLinePoints}
           polygons={polygons}
-          bodies={bodies}
+          buildings={buildings}
           currentPoints={toolManager.currentPoints}
           currentColor={currentColor}
           pixelsPerMeter={pixelsPerMeter}
@@ -261,7 +261,7 @@ function Canvas3DInner({
           onPointSelect={handlers.onPointClick!}
           onClosePolygon={toolManager.polygonTool.handleFinishPolygon}
           onPolygonClick={handlers.onPolygonClick!}
-          onDeleteBody={handlers.onBodyClick!}
+          onDeleteBuilding={handlers.onBuildingClick!}
           orbitControlsRef={orbitControlsRef}
           isDraggingPoint={isDraggingPoint}
           onCompassRotationChange={setCompassRotation}

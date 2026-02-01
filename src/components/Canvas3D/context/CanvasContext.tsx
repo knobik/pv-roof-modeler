@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react'
-import type { Polygon, Body } from '../types'
+import type { Polygon, Building } from '../types'
 import type { HistoryContextValue } from '../../../hooks/useHistory'
 import { PLANE_WIDTH } from '../constants'
 
@@ -20,9 +20,9 @@ export interface CanvasContextValue {
   /** Commits current internal polygons to external state (for drag end) */
   commitPolygons: () => void
 
-  // Body state
-  bodies: Body[]
-  setBodies: (bodies: Body[]) => void
+  // Building state
+  buildings: Building[]
+  setBuildings: (buildings: Building[]) => void
 
   // History
   historyContext?: HistoryContextValue
@@ -43,35 +43,35 @@ const CanvasContext = createContext<CanvasContextValue | null>(null)
 export interface CanvasProviderProps {
   children: React.ReactNode
   controlledPolygons?: Polygon[]
-  controlledBodies?: Body[]
+  controlledBuildings?: Building[]
   historyContext?: HistoryContextValue
   pixelsPerMeter?: number
   onPolygonsChange?: (polygons: Polygon[]) => void
-  onBodiesChange?: (bodies: Body[]) => void
+  onBuildingsChange?: (buildings: Building[]) => void
 }
 
 export function CanvasProvider({
   children,
   controlledPolygons,
-  controlledBodies,
+  controlledBuildings,
   historyContext,
   pixelsPerMeter,
   onPolygonsChange,
-  onBodiesChange,
+  onBuildingsChange,
 }: CanvasProviderProps) {
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [aspectRatio, setAspectRatio] = useState(1)
   const [imageWidth, setImageWidth] = useState<number | null>(null)
   const [internalPolygons, setInternalPolygons] = useState<Polygon[]>([])
-  const [internalBodies, setInternalBodies] = useState<Body[]>([])
+  const [internalBuildings, setInternalBuildings] = useState<Building[]>([])
   const [isDraggingPoint, setIsDraggingPoint] = useState(false)
 
   const isControlled = controlledPolygons !== undefined
-  const isBodiesControlled = controlledBodies !== undefined
+  const isBuildingsControlled = controlledBuildings !== undefined
 
   // Always render from internal state for smooth drag feedback
   const polygons = internalPolygons
-  const bodies = isBodiesControlled ? controlledBodies : internalBodies
+  const buildings = isBuildingsControlled ? controlledBuildings : internalBuildings
 
   // Sync internal state with controlled props (but not during drag)
   useEffect(() => {
@@ -81,47 +81,47 @@ export function CanvasProvider({
   }, [isControlled, controlledPolygons, isDraggingPoint])
 
   useEffect(() => {
-    if (isBodiesControlled) {
-      setInternalBodies(controlledBodies)
+    if (isBuildingsControlled) {
+      setInternalBuildings(controlledBuildings)
     }
-  }, [isBodiesControlled, controlledBodies])
+  }, [isBuildingsControlled, controlledBuildings])
 
-  // Sync body points with polygon points when polygons change
+  // Sync building points with polygon points when polygons change
   useEffect(() => {
-    const currentBodies = isBodiesControlled ? controlledBodies : internalBodies
-    if (currentBodies.length === 0) return
+    const currentBuildings = isBuildingsControlled ? controlledBuildings : internalBuildings
+    if (currentBuildings.length === 0) return
 
-    const updatedBodies = currentBodies.map((body) => {
-      const polygon = polygons.find((p) => p.id === body.polygonId)
-      if (!polygon) return body
+    const updatedBuildings = currentBuildings.map((building) => {
+      const polygon = polygons.find((p) => p.id === building.polygonId)
+      if (!polygon) return building
 
       const pointsChanged =
-        polygon.points.length !== body.points.length ||
+        polygon.points.length !== building.points.length ||
         polygon.points.some(
           (p, i) =>
-            !body.points[i] ||
-            p.x !== body.points[i].x ||
-            p.y !== body.points[i].y ||
-            p.z !== body.points[i].z
+            !building.points[i] ||
+            p.x !== building.points[i].x ||
+            p.y !== building.points[i].y ||
+            p.z !== building.points[i].z
         )
 
-      if (!pointsChanged) return body
+      if (!pointsChanged) return building
 
       return {
-        ...body,
+        ...building,
         points: polygon.points.map((p) => p.clone()),
       }
     })
 
-    const hasChanges = updatedBodies.some((b, i) => b !== currentBodies[i])
+    const hasChanges = updatedBuildings.some((b, i) => b !== currentBuildings[i])
     if (hasChanges) {
-      if (isBodiesControlled) {
-        onBodiesChange?.(updatedBodies)
+      if (isBuildingsControlled) {
+        onBuildingsChange?.(updatedBuildings)
       } else {
-        setInternalBodies(updatedBodies)
+        setInternalBuildings(updatedBuildings)
       }
     }
-  }, [polygons, internalBodies, controlledBodies, isBodiesControlled, onBodiesChange])
+  }, [polygons, internalBuildings, controlledBuildings, isBuildingsControlled, onBuildingsChange])
 
   const setPolygons = useCallback(
     (newPolygons: Polygon[]) => {
@@ -133,14 +133,14 @@ export function CanvasProvider({
     [isControlled, onPolygonsChange]
   )
 
-  const setBodies = useCallback(
-    (newBodies: Body[]) => {
-      if (!isBodiesControlled) {
-        setInternalBodies(newBodies)
+  const setBuildings = useCallback(
+    (newBuildings: Building[]) => {
+      if (!isBuildingsControlled) {
+        setInternalBuildings(newBuildings)
       }
-      onBodiesChange?.(newBodies)
+      onBuildingsChange?.(newBuildings)
     },
-    [isBodiesControlled, onBodiesChange]
+    [isBuildingsControlled, onBuildingsChange]
   )
 
   // Commit current internal polygons to external state (used at drag end to avoid stale closures)
@@ -163,8 +163,8 @@ export function CanvasProvider({
     internalPolygons,
     setInternalPolygons,
     commitPolygons,
-    bodies,
-    setBodies,
+    buildings,
+    setBuildings,
     historyContext,
     isDraggingPoint,
     setIsDraggingPoint,
@@ -178,8 +178,8 @@ export function CanvasProvider({
     setPolygons,
     internalPolygons,
     commitPolygons,
-    bodies,
-    setBodies,
+    buildings,
+    setBuildings,
     historyContext,
     isDraggingPoint,
     pixelsPerMeter,

@@ -3,8 +3,8 @@ export type { SelectToolExtended } from './SelectTool/useSelectTool'
 export { usePolygonTool } from './PolygonTool'
 export type { PolygonToolExtended } from './PolygonTool/usePolygonTool'
 export { useLineTool } from './LineTool'
-export { useBodyTool } from './BodyTool'
-export type { BodyToolExtended } from './BodyTool/useBodyTool'
+export { useBuildingTool } from './BuildingTool'
+export type { BuildingToolExtended } from './BuildingTool/useBuildingTool'
 export { useCalibrationTool } from './CalibrationTool'
 export type { CalibrationToolExtended } from './CalibrationTool/useCalibrationTool'
 export { useMeasurementTool } from './MeasurementTool'
@@ -19,7 +19,7 @@ export type {
   SelectToolState,
   PolygonToolState,
   LineToolState,
-  BodyToolState,
+  BuildingToolState,
   CalibrationToolState,
   MeasurementToolState,
 } from './types'

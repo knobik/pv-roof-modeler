@@ -1,31 +1,31 @@
-import type { Body } from '../types'
+import type { Building } from '../types'
 import { BuildingBody } from './BuildingBody'
 
 export interface BuildingBodiesProps {
-  bodies: Body[]
-  isAddingBody: boolean
+  buildings: Building[]
+  isAddingBuilding: boolean
   imageUrl: string | null
   aspectRatio: number
   castShadow: boolean
-  onDeleteBody: (bodyId: string) => void
+  onDeleteBuilding: (buildingId: string) => void
 }
 
-export function BuildingBodies({ bodies, isAddingBody, imageUrl, aspectRatio, castShadow, onDeleteBody }: BuildingBodiesProps) {
+export function BuildingBodies({ buildings, isAddingBuilding, imageUrl, aspectRatio, castShadow, onDeleteBuilding }: BuildingBodiesProps) {
   return (
     <>
-      {bodies.map((body) => {
-        // Skip hidden bodies
-        if (body.visible === false) return null
+      {buildings.map((building) => {
+        // Skip hidden buildings
+        if (building.visible === false) return null
 
         return (
           <BuildingBody
-            key={body.id}
-            body={body}
-            isAddingBody={isAddingBody}
+            key={building.id}
+            building={building}
+            isAddingBuilding={isAddingBuilding}
             imageUrl={imageUrl}
             aspectRatio={aspectRatio}
             castShadow={castShadow}
-            onDelete={() => onDeleteBody(body.id)}
+            onDelete={() => onDeleteBuilding(building.id)}
           />
         )
       })}

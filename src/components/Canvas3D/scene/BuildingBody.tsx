@@ -1,19 +1,19 @@
 import { useState, useCallback, useMemo } from 'react'
 import { ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
-import type { Body } from '../types'
+import type { Building } from '../types'
 import { PLANE_WIDTH } from '../constants'
 
 export interface BuildingBodyProps {
-  body: Body
-  isAddingBody: boolean
+  building: Building
+  isAddingBuilding: boolean
   imageUrl: string | null
   aspectRatio: number
   castShadow: boolean
   onDelete: () => void
 }
 
-export function BuildingBody({ body, isAddingBody, imageUrl, aspectRatio, castShadow, onDelete }: BuildingBodyProps) {
+export function BuildingBody({ building, isAddingBuilding, imageUrl, aspectRatio, castShadow, onDelete }: BuildingBodyProps) {
   const [isHovered, setIsHovered] = useState(false)
 
   // Load the image texture
@@ -27,30 +27,30 @@ export function BuildingBody({ body, isAddingBody, imageUrl, aspectRatio, castSh
   // Create the extruded geometry for the walls
   const wallsGeometry = useMemo(() => {
     const shape = new THREE.Shape()
-    const firstPoint = body.points[0]
+    const firstPoint = building.points[0]
     shape.moveTo(firstPoint.x, -firstPoint.z)
 
-    for (let i = 1; i < body.points.length; i++) {
-      shape.lineTo(body.points[i].x, -body.points[i].z)
+    for (let i = 1; i < building.points.length; i++) {
+      shape.lineTo(building.points[i].x, -building.points[i].z)
     }
     shape.closePath()
 
     const extrudeSettings = {
-      depth: body.height,
+      depth: building.height,
       bevelEnabled: false,
     }
 
     return new THREE.ExtrudeGeometry(shape, extrudeSettings)
-  }, [body.points, body.height])
+  }, [building.points, building.height])
 
   // Create the top face geometry with proper UV mapping for texture projection
   const topGeometry = useMemo(() => {
     const shape = new THREE.Shape()
-    const firstPoint = body.points[0]
+    const firstPoint = building.points[0]
     shape.moveTo(firstPoint.x, -firstPoint.z)
 
-    for (let i = 1; i < body.points.length; i++) {
-      shape.lineTo(body.points[i].x, -body.points[i].z)
+    for (let i = 1; i < building.points.length; i++) {
+      shape.lineTo(building.points[i].x, -building.points[i].z)
     }
     shape.closePath()
 
@@ -76,16 +76,16 @@ export function BuildingBody({ body, isAddingBody, imageUrl, aspectRatio, castSh
 
     uvAttribute.needsUpdate = true
     return geo
-  }, [body.points, aspectRatio])
+  }, [building.points, aspectRatio])
 
   const handleContextMenu = useCallback(
     (e: ThreeEvent<MouseEvent>) => {
-      if (isAddingBody) {
+      if (isAddingBuilding) {
         e.stopPropagation()
         onDelete()
       }
     },
-    [isAddingBody, onDelete]
+    [isAddingBuilding, onDelete]
   )
 
   return (
@@ -103,7 +103,7 @@ export function BuildingBody({ body, isAddingBody, imageUrl, aspectRatio, castSh
         receiveShadow={castShadow}
       >
         <meshStandardMaterial
-          color={isHovered && isAddingBody ? '#ff6666' : body.color}
+          color={isHovered && isAddingBuilding ? '#ff6666' : building.color}
           side={THREE.DoubleSide}
         />
       </mesh>
@@ -111,13 +111,13 @@ export function BuildingBody({ body, isAddingBody, imageUrl, aspectRatio, castSh
       <mesh
         geometry={topGeometry}
         rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, body.height + 0.001, 0]}
+        position={[0, building.height + 0.001, 0]}
         castShadow={castShadow}
       >
         {texture ? (
           <meshBasicMaterial map={texture} side={THREE.DoubleSide} />
         ) : (
-          <meshStandardMaterial color={body.color} side={THREE.DoubleSide} />
+          <meshStandardMaterial color={building.color} side={THREE.DoubleSide} />
         )}
       </mesh>
     </group>

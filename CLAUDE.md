@@ -19,7 +19,7 @@ A React component library for 3D canvas interactions, specifically designed for 
 
 **Key Components**:
 - `Canvas3D` - 3D canvas with image plane, polygon drawing/editing, orbit controls. Supports controlled mode via `polygons`/`onPolygonsChange` props.
-- `PolygonList` - Sidebar component for managing polygons and bodies with color pickers, height controls, visibility toggles.
+- `PolygonList` - Sidebar component for managing polygons and buildings with color pickers, height controls, visibility toggles.
 - `PVRoofModeler` - Higher-level component combining Canvas3D + PolygonList with built-in state management and undo/redo.
 
 **3D Stack**: Uses `@react-three/fiber` for React-Three.js bindings, `@react-three/drei` for OrbitControls and Line, and `suncalc` for realistic sun positioning.
@@ -33,7 +33,7 @@ The Canvas3D component uses a modular architecture:
 ```
 src/components/Canvas3D/
 ├── Canvas3D.tsx      # Main component
-├── types.ts          # Polygon, Body, ToolName types
+├── types.ts          # Polygon, Building, ToolName types
 ├── constants.ts      # OUTLINE_HEIGHT, POINT_SIZE, PLANE_WIDTH, etc.
 ├── primitives/       # Low-level 3D components (DraggablePoint, ClickableEdge, etc.)
 ├── scene/            # Scene composition (Scene, ImagePlane, SunLight, BuildingBody, etc.)
@@ -52,7 +52,7 @@ src/components/Canvas3D/
 
 4. **Context Architecture**: Two contexts provide shared state:
    - `ToolContext`: Active tool, tool-specific state (currentPoints, calibrationPoints, selectedLinePoints)
-   - `CanvasContext`: Canvas state (polygons, bodies, imageData, drag state, pixel/meter ratio)
+   - `CanvasContext`: Canvas state (polygons, buildings, imageData, drag state, pixel/meter ratio)
 
 ## Adding New Tools
 

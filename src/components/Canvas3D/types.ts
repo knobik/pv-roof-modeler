@@ -8,13 +8,13 @@ export interface Polygon {
   visible?: boolean  // whether the polygon is visible in the editor (default: true)
 }
 
-export interface Body {
+export interface Building {
   id: string
   polygonId: string  // reference to source polygon
   points: THREE.Vector3[]  // base points (from polygon)
   height: number
   color: string
-  visible?: boolean  // whether the body is visible in the editor (default: true)
+  visible?: boolean  // whether the building is visible in the editor (default: true)
 }
 
-export type ToolName = 'select' | 'polygon' | 'line' | 'body' | 'calibration' | 'measurement'
+export type ToolName = 'select' | 'polygon' | 'line' | 'building' | 'calibration' | 'measurement'

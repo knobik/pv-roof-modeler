@@ -1,15 +1,15 @@
 import { createContext, useContext, useState, useCallback, useRef, useMemo } from 'react'
-import type { Polygon, Body } from '../components/Canvas3D'
+import type { Polygon, Building } from '../components/Canvas3D'
 
 export interface EditorState {
   polygons: Polygon[]
-  bodies: Body[]
+  buildings: Building[]
 }
 
 export interface HistoryContextValue {
   state: EditorState
   setPolygons: (polygons: Polygon[]) => void
-  setBodies: (bodies: Body[]) => void
+  setBuildings: (buildings: Building[]) => void
 
   // History actions
   undo: () => void
@@ -35,7 +35,7 @@ export interface HistoryProviderProps {
   children: React.ReactNode
   maxHistorySize?: number
   initialPolygons?: Polygon[]
-  initialBodies?: Body[]
+  initialBuildings?: Building[]
 }
 
 function cloneState(state: EditorState): EditorState {
@@ -45,7 +45,7 @@ function cloneState(state: EditorState): EditorState {
       points: p.points.map(pt => pt.clone()),
       lines: [...p.lines],
     })),
-    bodies: state.bodies.map(b => ({
+    buildings: state.buildings.map(b => ({
       ...b,
       points: b.points.map(pt => pt.clone()),
     })),
@@ -56,11 +56,11 @@ export function HistoryProvider({
   children,
   maxHistorySize = 50,
   initialPolygons = [],
-  initialBodies = [],
+  initialBuildings = [],
 }: HistoryProviderProps) {
   const [state, setState] = useState<EditorState>({
     polygons: initialPolygons,
-    bodies: initialBodies,
+    buildings: initialBuildings,
   })
 
   const undoStackRef = useRef<EditorState[]>([])
@@ -172,14 +172,14 @@ export function HistoryProvider({
     setState(prev => ({ ...prev, polygons }))
   }, [])
 
-  const setBodies = useCallback((bodies: Body[]) => {
-    setState(prev => ({ ...prev, bodies }))
+  const setBuildings = useCallback((buildings: Building[]) => {
+    setState(prev => ({ ...prev, buildings }))
   }, [])
 
   const value: HistoryContextValue = useMemo(() => ({
     state,
     setPolygons,
-    setBodies,
+    setBuildings,
     undo,
     redo,
     takeSnapshot,
@@ -191,7 +191,7 @@ export function HistoryProvider({
     redoStack: redoStackRef.current,
     goToUndoState,
     goToRedoState,
-  }), [state, setPolygons, setBodies, undo, redo, takeSnapshot, beginBatch, endBatch, goToUndoState, goToRedoState])
+  }), [state, setPolygons, setBuildings, undo, redo, takeSnapshot, beginBatch, endBatch, goToUndoState, goToRedoState])
 
   return (
     <HistoryContext.Provider value={value}>

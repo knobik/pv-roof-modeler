@@ -5,14 +5,14 @@ import type { ToolActions, ToolHookReturn, ToolState } from './types'
 import { useSelectTool, type SelectToolExtended } from './SelectTool/useSelectTool'
 import { usePolygonTool, type PolygonToolExtended } from './PolygonTool/usePolygonTool'
 import { useLineTool } from './LineTool/useLineTool'
-import { useBodyTool, type BodyToolExtended } from './BodyTool/useBodyTool'
+import { useBuildingTool, type BuildingToolExtended } from './BuildingTool/useBuildingTool'
 import { useCalibrationTool, type CalibrationToolExtended } from './CalibrationTool/useCalibrationTool'
 import { useMeasurementTool, type MeasurementToolExtended } from './MeasurementTool/useMeasurementTool'
 import { useToolContext } from '../context/ToolContext'
 import { useCanvasContext } from '../context/CanvasContext'
 
 export type { PolygonToolExtended } from './PolygonTool/usePolygonTool'
-export type { BodyToolExtended } from './BodyTool/useBodyTool'
+export type { BuildingToolExtended } from './BuildingTool/useBuildingTool'
 export type { CalibrationToolExtended } from './CalibrationTool/useCalibrationTool'
 export type { MeasurementToolExtended } from './MeasurementTool/useMeasurementTool'
 export type { SelectToolExtended } from './SelectTool/useSelectTool'
@@ -47,7 +47,7 @@ export interface ToolManagerReturn {
   selectTool: SelectToolExtended
   polygonTool: PolygonToolExtended
   lineTool: ToolHookReturn
-  bodyTool: BodyToolExtended
+  buildingTool: BuildingToolExtended
   calibrationTool: CalibrationToolExtended
   measurementTool: MeasurementToolExtended
 }
@@ -71,7 +71,7 @@ export function useToolManager(): ToolManagerReturn {
   const selectTool = useSelectTool()
   const polygonTool = usePolygonTool()
   const lineTool = useLineTool()
-  const bodyTool = useBodyTool()
+  const buildingTool = useBuildingTool()
   const calibrationTool = useCalibrationTool()
   const measurementTool = useMeasurementTool()
 
@@ -80,10 +80,10 @@ export function useToolManager(): ToolManagerReturn {
     select: selectTool,
     polygon: polygonTool,
     line: lineTool,
-    body: bodyTool,
+    building: buildingTool,
     calibration: calibrationTool,
     measurement: measurementTool,
-  }), [selectTool, polygonTool, lineTool, bodyTool, calibrationTool, measurementTool])
+  }), [selectTool, polygonTool, lineTool, buildingTool, calibrationTool, measurementTool])
 
   const getToolByName = useCallback((name: ToolName): ToolHookReturn<ToolState> => {
     return tools[name]
@@ -138,17 +138,17 @@ export function useToolManager(): ToolManagerReturn {
       }
     },
 
-    // Polygon click - body tool
+    // Polygon click - building tool
     onPolygonClick: (polygonId: string) => {
-      if (activeTool === 'body') {
-        bodyTool.actions.onPolygonClick?.(polygonId)
+      if (activeTool === 'building') {
+        buildingTool.actions.onPolygonClick?.(polygonId)
       }
     },
 
-    // Body click - body tool (for deletion)
-    onBodyClick: (bodyId: string) => {
-      if (activeTool === 'body') {
-        bodyTool.actions.onBodyClick?.(bodyId)
+    // Building click - building tool (for deletion)
+    onBuildingClick: (buildingId: string) => {
+      if (activeTool === 'building') {
+        buildingTool.actions.onBuildingClick?.(buildingId)
       }
     },
 
@@ -189,7 +189,7 @@ export function useToolManager(): ToolManagerReturn {
     selectTool,
     polygonTool,
     lineTool,
-    bodyTool,
+    buildingTool,
     calibrationTool,
     measurementTool,
     setActiveTool,
@@ -228,7 +228,7 @@ export function useToolManager(): ToolManagerReturn {
     selectTool,
     polygonTool,
     lineTool,
-    bodyTool,
+    buildingTool,
     calibrationTool,
     measurementTool,
   }

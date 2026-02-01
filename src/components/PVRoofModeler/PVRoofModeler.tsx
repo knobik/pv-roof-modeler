@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Canvas3D } from '../Canvas3D'
-import type { Canvas3DProps, Polygon, Body } from '../Canvas3D'
+import type { Canvas3DProps, Polygon, Building } from '../Canvas3D'
 import { PolygonList } from '../PolygonList'
 import { HistoryProvider, useHistoryOptional } from '../../hooks/useHistory'
 import type { HistoryContextValue } from '../../hooks/useHistory'
@@ -17,7 +17,7 @@ export interface PVRoofModelerProps {
   gridSize?: number
   /** Show grid helper (default: true) */
   showGrid?: boolean
-  /** Enable shadow casting for bodies (default: true) */
+  /** Enable shadow casting for buildings (default: true) */
   shadows?: boolean
   /** Time of day in hours (0-24), affects sun position and shadows (default: 10) */
   timeOfDay?: number
@@ -39,14 +39,14 @@ export interface PVRoofModelerProps {
   hideSidebar?: boolean
   /** Controlled polygons array */
   polygons?: Polygon[]
-  /** Controlled bodies array */
-  bodies?: Body[]
+  /** Controlled buildings array */
+  buildings?: Building[]
   /** External history context (for controlled mode with external history management) */
   historyContext?: HistoryContextValue
   /** Callback when polygons change */
   onPolygonsChange?: (polygons: Polygon[]) => void
-  /** Callback when bodies change */
-  onBodiesChange?: (bodies: Body[]) => void
+  /** Callback when buildings change */
+  onBuildingsChange?: (buildings: Building[]) => void
   /** Callback when an image is loaded */
   onImageLoad?: (file: File) => void
   /** Callback when selection changes */
@@ -78,10 +78,10 @@ function PVRoofModelerInner({
   sidebarPosition = 'right',
   hideSidebar = false,
   polygons: controlledPolygons,
-  bodies: controlledBodies,
+  buildings: controlledBuildings,
   historyContext: externalHistory,
   onPolygonsChange,
-  onBodiesChange,
+  onBuildingsChange,
   onImageLoad,
   onSelectionChange,
   onTimeOfDayChange,
@@ -98,11 +98,11 @@ function PVRoofModelerInner({
   // For uncontrolled mode without external history, use internal history state
   // For controlled mode, use controlled props
   const isPolygonsControlled = controlledPolygons !== undefined
-  const isBodiesControlled = controlledBodies !== undefined
+  const isBuildingsControlled = controlledBuildings !== undefined
 
   // Internal state for uncontrolled mode without history
   const [internalPolygons, setInternalPolygons] = useState<Polygon[]>([])
-  const [internalBodies, setInternalBodies] = useState<Body[]>([])
+  const [internalBuildings, setInternalBuildings] = useState<Building[]>([])
 
   // Track if we're currently dragging height slider for batch operations
   const isDraggingHeightRef = useRef(false)
@@ -114,11 +114,11 @@ function PVRoofModelerInner({
       ? history.state.polygons
       : internalPolygons
 
-  const bodies = isBodiesControlled
-    ? controlledBodies
+  const buildings = isBuildingsControlled
+    ? controlledBuildings
     : history
-      ? history.state.bodies
-      : internalBodies
+      ? history.state.buildings
+      : internalBuildings
 
   // Keyboard shortcuts for undo/redo
   useEffect(() => {
@@ -166,7 +166,7 @@ function PVRoofModelerInner({
       history?.takeSnapshot()
 
       const newPolygons = polygons.filter((p) => p.id !== polygonId)
-      const newBodies = bodies.filter((b) => b.polygonId !== polygonId)
+      const newBuildings = buildings.filter((b) => b.polygonId !== polygonId)
 
       if (history && !isPolygonsControlled) {
         history.setPolygons(newPolygons)
@@ -175,19 +175,19 @@ function PVRoofModelerInner({
       }
       onPolygonsChange?.(newPolygons)
 
-      if (history && !isBodiesControlled) {
-        history.setBodies(newBodies)
-      } else if (!isBodiesControlled) {
-        setInternalBodies(newBodies)
+      if (history && !isBuildingsControlled) {
+        history.setBuildings(newBuildings)
+      } else if (!isBuildingsControlled) {
+        setInternalBuildings(newBuildings)
       }
-      onBodiesChange?.(newBodies)
+      onBuildingsChange?.(newBuildings)
 
       if (selectedPolygonId === polygonId) {
         setSelectedPolygonId(null)
         onSelectionChange?.(null)
       }
     },
-    [polygons, bodies, history, isPolygonsControlled, isBodiesControlled, selectedPolygonId, onPolygonsChange, onBodiesChange, onSelectionChange]
+    [polygons, buildings, history, isPolygonsControlled, isBuildingsControlled, selectedPolygonId, onPolygonsChange, onBuildingsChange, onSelectionChange]
   )
 
   const handlePolygonColorChange = useCallback(
@@ -208,73 +208,73 @@ function PVRoofModelerInner({
     [polygons, history, isPolygonsControlled, onPolygonsChange]
   )
 
-  // Body handlers
-  const handleBodiesChange = useCallback(
-    (newBodies: Body[]) => {
-      if (history && !isBodiesControlled) {
-        history.setBodies(newBodies)
-      } else if (!isBodiesControlled) {
-        setInternalBodies(newBodies)
+  // Building handlers
+  const handleBuildingsChange = useCallback(
+    (newBuildings: Building[]) => {
+      if (history && !isBuildingsControlled) {
+        history.setBuildings(newBuildings)
+      } else if (!isBuildingsControlled) {
+        setInternalBuildings(newBuildings)
       }
-      onBodiesChange?.(newBodies)
+      onBuildingsChange?.(newBuildings)
     },
-    [history, isBodiesControlled, onBodiesChange]
+    [history, isBuildingsControlled, onBuildingsChange]
   )
 
-  const handleDeleteBody = useCallback(
-    (bodyId: string) => {
+  const handleDeleteBuilding = useCallback(
+    (buildingId: string) => {
       history?.takeSnapshot()
 
-      const newBodies = bodies.filter((b) => b.id !== bodyId)
+      const newBuildings = buildings.filter((b) => b.id !== buildingId)
 
-      if (history && !isBodiesControlled) {
-        history.setBodies(newBodies)
-      } else if (!isBodiesControlled) {
-        setInternalBodies(newBodies)
+      if (history && !isBuildingsControlled) {
+        history.setBuildings(newBuildings)
+      } else if (!isBuildingsControlled) {
+        setInternalBuildings(newBuildings)
       }
-      onBodiesChange?.(newBodies)
+      onBuildingsChange?.(newBuildings)
     },
-    [bodies, history, isBodiesControlled, onBodiesChange]
+    [buildings, history, isBuildingsControlled, onBuildingsChange]
   )
 
-  const handleBodyColorChange = useCallback(
-    (bodyId: string, color: string) => {
+  const handleBuildingColorChange = useCallback(
+    (buildingId: string, color: string) => {
       history?.takeSnapshot()
 
-      const newBodies = bodies.map((b) =>
-        b.id === bodyId ? { ...b, color } : b
+      const newBuildings = buildings.map((b) =>
+        b.id === buildingId ? { ...b, color } : b
       )
 
-      if (history && !isBodiesControlled) {
-        history.setBodies(newBodies)
-      } else if (!isBodiesControlled) {
-        setInternalBodies(newBodies)
+      if (history && !isBuildingsControlled) {
+        history.setBuildings(newBuildings)
+      } else if (!isBuildingsControlled) {
+        setInternalBuildings(newBuildings)
       }
-      onBodiesChange?.(newBodies)
+      onBuildingsChange?.(newBuildings)
     },
-    [bodies, history, isBodiesControlled, onBodiesChange]
+    [buildings, history, isBuildingsControlled, onBuildingsChange]
   )
 
-  const handleBodyHeightChange = useCallback(
-    (bodyId: string, height: number) => {
+  const handleBuildingHeightChange = useCallback(
+    (buildingId: string, height: number) => {
       // Start batch on first change
       if (!isDraggingHeightRef.current) {
         isDraggingHeightRef.current = true
         history?.beginBatch()
       }
 
-      const newBodies = bodies.map((b) =>
-        b.id === bodyId ? { ...b, height } : b
+      const newBuildings = buildings.map((b) =>
+        b.id === buildingId ? { ...b, height } : b
       )
 
-      if (history && !isBodiesControlled) {
-        history.setBodies(newBodies)
-      } else if (!isBodiesControlled) {
-        setInternalBodies(newBodies)
+      if (history && !isBuildingsControlled) {
+        history.setBuildings(newBuildings)
+      } else if (!isBuildingsControlled) {
+        setInternalBuildings(newBuildings)
       }
-      onBodiesChange?.(newBodies)
+      onBuildingsChange?.(newBuildings)
     },
-    [bodies, history, isBodiesControlled, onBodiesChange]
+    [buildings, history, isBuildingsControlled, onBuildingsChange]
   )
 
   // End batch when mouse is released anywhere
@@ -324,20 +324,20 @@ function PVRoofModelerInner({
     [polygons, history, isPolygonsControlled, onPolygonsChange]
   )
 
-  const handleBodyVisibilityChange = useCallback(
-    (bodyId: string, visible: boolean) => {
-      const newBodies = bodies.map((b) =>
-        b.id === bodyId ? { ...b, visible } : b
+  const handleBuildingVisibilityChange = useCallback(
+    (buildingId: string, visible: boolean) => {
+      const newBuildings = buildings.map((b) =>
+        b.id === buildingId ? { ...b, visible } : b
       )
 
-      if (history && !isBodiesControlled) {
-        history.setBodies(newBodies)
-      } else if (!isBodiesControlled) {
-        setInternalBodies(newBodies)
+      if (history && !isBuildingsControlled) {
+        history.setBuildings(newBuildings)
+      } else if (!isBuildingsControlled) {
+        setInternalBuildings(newBuildings)
       }
-      onBodiesChange?.(newBodies)
+      onBuildingsChange?.(newBuildings)
     },
-    [bodies, history, isBodiesControlled, onBodiesChange]
+    [buildings, history, isBuildingsControlled, onBuildingsChange]
   )
 
   const sidebar = !hideSidebar && (
@@ -347,7 +347,7 @@ function PVRoofModelerInner({
     >
       <PolygonList
         polygons={polygons}
-        bodies={bodies}
+        buildings={buildings}
         selectedPolygonId={selectedPolygonId}
         pixelsPerMeter={pixelsPerMeter}
         imageWidth={imageWidth ?? undefined}
@@ -355,10 +355,10 @@ function PVRoofModelerInner({
         onDeletePolygon={handleDeletePolygon}
         onPolygonColorChange={handlePolygonColorChange}
         onPolygonVisibilityChange={handlePolygonVisibilityChange}
-        onDeleteBody={handleDeleteBody}
-        onBodyColorChange={handleBodyColorChange}
-        onBodyHeightChange={handleBodyHeightChange}
-        onBodyVisibilityChange={handleBodyVisibilityChange}
+        onDeleteBuilding={handleDeleteBuilding}
+        onBuildingColorChange={handleBuildingColorChange}
+        onBuildingHeightChange={handleBuildingHeightChange}
+        onBuildingVisibilityChange={handleBuildingVisibilityChange}
       />
     </div>
   )
@@ -382,10 +382,10 @@ function PVRoofModelerInner({
           pixelsPerMeter={pixelsPerMeter}
           historyContext={history || undefined}
           polygons={polygons}
-          bodies={bodies}
+          buildings={buildings}
           onPolygonsChange={handlePolygonsChange}
           onTimeOfDayChange={onTimeOfDayChange}
-          onBodiesChange={handleBodiesChange}
+          onBuildingsChange={handleBuildingsChange}
           onImageLoad={onImageLoad}
           onImageDimensionsChange={handleImageDimensionsChange}
           onPixelsPerMeterChange={onPixelsPerMeterChange}

@@ -5,7 +5,7 @@ import './HistoryDebugger.css'
 export interface HistoryDebuggerProps {
   /** Title for the debugger panel (default: 'History') */
   title?: string
-  /** Show polygon/body counts (default: true) */
+  /** Show polygon/building counts (default: true) */
   showCounts?: boolean
   /** Max height before scrolling (default: 300) */
   maxHeight?: number | string
@@ -20,7 +20,7 @@ interface StatePreviewProps {
 
 function StatePreview({ state, label, isCurrent, onClick }: StatePreviewProps) {
   const polygonCount = state.polygons.length
-  const bodyCount = state.bodies.length
+  const buildingCount = state.buildings.length
   const pointCount = state.polygons.reduce((sum, p) => sum + p.points.length, 0)
 
   return (
@@ -30,7 +30,7 @@ function StatePreview({ state, label, isCurrent, onClick }: StatePreviewProps) {
     >
       <span className="history-debugger-item-label">{label}</span>
       <span className="history-debugger-item-stats">
-        {polygonCount} poly, {bodyCount} body, {pointCount} pts
+        {polygonCount} poly, {buildingCount} building, {pointCount} pts
       </span>
     </div>
   )

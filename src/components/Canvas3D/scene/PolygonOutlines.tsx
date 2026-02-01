@@ -8,7 +8,7 @@ export interface PolygonOutlinesProps {
   currentPoints: THREE.Vector3[]
   currentColor: string
   isAddingLine: boolean
-  isAddingBody: boolean
+  isAddingBuilding: boolean
   selectedLinePoints: { polygonId: string; pointIndex: number } | null
   pixelsPerMeter: number | null
   imageWidth: number | null
@@ -28,7 +28,7 @@ export function PolygonOutlines({
   currentPoints,
   currentColor,
   isAddingLine,
-  isAddingBody,
+  isAddingBuilding,
   selectedLinePoints,
   pixelsPerMeter,
   imageWidth,
@@ -55,8 +55,8 @@ export function PolygonOutlines({
 
         return (
           <group key={polygon.id}>
-            {/* Clickable polygon fill for body tool */}
-            {isAddingBody && polygon.points.length >= 3 && (
+            {/* Clickable polygon fill for building tool */}
+            {isAddingBuilding && polygon.points.length >= 3 && (
               <PolygonFill
                 points={polygon.points}
                 color={polygon.color}
@@ -125,7 +125,7 @@ export function PolygonOutlines({
                     onDelete={() => onPointDelete(polygon.id, i)}
                     onSelect={() => onPointSelect(polygon.id, i)}
                   />
-                  {!isAddingLine && !isAddingBody && (
+                  {!isAddingLine && !isAddingBuilding && (
                     <ClickableEdge
                       start={point}
                       end={nextPoint}

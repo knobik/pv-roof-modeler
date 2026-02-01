@@ -1,6 +1,6 @@
 import type { ToolName } from '../types'
 import type { HistoryContextValue } from '../../../hooks/useHistory'
-import { IconCursor, IconPolygon, IconLine, IconBody, IconCalibration, IconMeasurement, IconUndo, IconRedo } from './Icons'
+import { IconCursor, IconPolygon, IconLine, IconBuilding, IconCalibration, IconMeasurement, IconUndo, IconRedo } from './Icons'
 
 export interface ToolboxProps {
   activeTool: ToolName
@@ -44,13 +44,13 @@ export function Toolbox({
         <span className="canvas3d-tool-tooltip">Add Line (L)</span>
       </button>
       <button
-        className={`canvas3d-tool ${activeTool === 'body' ? 'canvas3d-tool--active' : ''}`}
-        onClick={() => onSelectTool('body')}
+        className={`canvas3d-tool ${activeTool === 'building' ? 'canvas3d-tool--active' : ''}`}
+        onClick={() => onSelectTool('building')}
         disabled={polygonsCount === 0}
-        title="Add Body"
+        title="Add Building"
       >
-        <IconBody />
-        <span className="canvas3d-tool-tooltip">Add Body (B)</span>
+        <IconBuilding />
+        <span className="canvas3d-tool-tooltip">Add Building (B)</span>
       </button>
       <div className="canvas3d-toolbox-divider" />
       <button
