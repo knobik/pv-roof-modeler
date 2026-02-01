@@ -1,30 +1,28 @@
 .history-debugger {
-  background: #fff;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-size: 12px;
-  color: #333;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 6px;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.8);
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .history-debugger-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 12px;
+  padding: 10px 12px;
   background: rgba(0, 0, 0, 0.03);
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  font-weight: 500;
 }
 
 .history-debugger-title {
-  font-weight: 600;
-  color: #111;
+  font-weight: 500;
 }
 
 .history-debugger-counts {
-  color: #888;
+  color: rgba(0, 0, 0, 0.4);
   font-size: 11px;
 }
 
@@ -34,9 +32,10 @@
 }
 
 .history-debugger-empty {
-  padding: 16px;
+  padding: 20px 12px;
   text-align: center;
-  color: #999;
+  color: rgba(0, 0, 0, 0.4);
+  font-size: 12px;
 }
 
 .history-debugger-section {
@@ -50,7 +49,8 @@
 .history-debugger-section-label {
   font-size: 10px;
   text-transform: uppercase;
-  color: #999;
+  letter-spacing: 0.05em;
+  color: rgba(0, 0, 0, 0.4);
   margin-bottom: 4px;
   padding-left: 4px;
 }
@@ -76,16 +76,16 @@
 
 .history-debugger-item--clickable {
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: background-color 0.15s;
 }
 
 .history-debugger-item--clickable:hover {
-  background: rgba(0, 0, 0, 0.05);
+  background: rgba(0, 0, 0, 0.03);
 }
 
 .history-debugger-item-label {
   font-weight: 500;
-  color: #666;
+  color: rgba(0, 0, 0, 0.6);
 }
 
 .history-debugger-item--current .history-debugger-item-label {
@@ -93,7 +93,7 @@
 }
 
 .history-debugger-item-stats {
-  color: #999;
+  color: rgba(0, 0, 0, 0.4);
   font-size: 11px;
 }
 
