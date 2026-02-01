@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
-import type { Polygon, Building } from '../Canvas3D/Canvas3D'
+import type { Polygon, Building, RoofType } from '../Canvas3D/Canvas3D'
+import { ROOF_TYPE_LABELS, DEFAULT_ROOF_PITCH, DEFAULT_ROOF_ROTATION } from '../Canvas3D/constants'
 import './PolygonList.css'
 
 // The image plane width in Three.js units (must match Canvas3D PLANE_WIDTH)
@@ -21,6 +22,9 @@ export interface PolygonListProps {
   onBuildingColorChange?: (buildingId: string, color: string) => void
   onBuildingHeightChange?: (buildingId: string, height: number) => void
   onBuildingVisibilityChange?: (buildingId: string, visible: boolean) => void
+  onBuildingRoofTypeChange?: (buildingId: string, roofType: RoofType) => void
+  onBuildingRoofPitchChange?: (buildingId: string, pitch: number) => void
+  onBuildingRoofRotationChange?: (buildingId: string, rotation: number) => void
 }
 
 const IconTrash = () => (
@@ -84,6 +88,9 @@ export function PolygonList({
   onBuildingColorChange,
   onBuildingHeightChange,
   onBuildingVisibilityChange,
+  onBuildingRoofTypeChange,
+  onBuildingRoofPitchChange,
+  onBuildingRoofRotationChange,
 }: PolygonListProps) {
   // Track collapsed items instead of expanded - this way items start expanded by default
   const [collapsedPolygons, setCollapsedPolygons] = useState<Set<string>>(new Set())
@@ -194,6 +201,36 @@ export function PolygonList({
       onBuildingVisibilityChange?.(buildingId, !currentVisible)
     },
     [onBuildingVisibilityChange]
+  )
+
+  const handleBuildingRoofTypeChange = useCallback(
+    (e: React.ChangeEvent<HTMLSelectElement>, buildingId: string) => {
+      e.stopPropagation()
+      onBuildingRoofTypeChange?.(buildingId, e.target.value as RoofType)
+    },
+    [onBuildingRoofTypeChange]
+  )
+
+  const handleBuildingRoofPitchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>, buildingId: string) => {
+      e.stopPropagation()
+      const pitch = parseInt(e.target.value, 10)
+      if (!isNaN(pitch) && pitch >= 15 && pitch <= 60) {
+        onBuildingRoofPitchChange?.(buildingId, pitch)
+      }
+    },
+    [onBuildingRoofPitchChange]
+  )
+
+  const handleBuildingRoofRotationChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>, buildingId: string) => {
+      e.stopPropagation()
+      const rotation = parseInt(e.target.value, 10)
+      if (!isNaN(rotation) && rotation >= 0 && rotation <= 360) {
+        onBuildingRoofRotationChange?.(buildingId, rotation)
+      }
+    },
+    [onBuildingRoofRotationChange]
   )
 
   const getBuildingsForPolygon = useCallback(
@@ -340,6 +377,59 @@ export function PolygonList({
                           onChange={(e) => handleBuildingHeightChange(e, building.id)}
                         />
                       </div>
+                      <div className="polygon-list-building-roof-type">
+                        <label className="polygon-list-building-roof-type-label">Roof</label>
+                        <select
+                          className="polygon-list-building-roof-type-select"
+                          value={building.roofType ?? 'flat'}
+                          onChange={(e) => handleBuildingRoofTypeChange(e, building.id)}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {Object.entries(ROOF_TYPE_LABELS).map(([value, label]) => (
+                            <option key={value} value={value}>
+                              {label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      {building.roofType && building.roofType !== 'flat' && (
+                        <>
+                          <div className="polygon-list-building-roof-pitch">
+                            <label className="polygon-list-building-roof-pitch-label">Pitch</label>
+                            <input
+                              type="range"
+                              className="polygon-list-building-roof-pitch-slider"
+                              min="15"
+                              max="60"
+                              step="5"
+                              value={building.roofPitch ?? DEFAULT_ROOF_PITCH}
+                              onChange={(e) => handleBuildingRoofPitchChange(e, building.id)}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                            <span className="polygon-list-building-roof-pitch-value">
+                              {building.roofPitch ?? DEFAULT_ROOF_PITCH}°
+                            </span>
+                          </div>
+                          {building.roofType !== 'tented' && building.roofType !== 'mansard' && (
+                            <div className="polygon-list-building-roof-rotation">
+                              <label className="polygon-list-building-roof-rotation-label">Rotate</label>
+                              <input
+                                type="range"
+                                className="polygon-list-building-roof-rotation-slider"
+                                min="0"
+                                max="360"
+                                step="15"
+                                value={building.roofRotation ?? DEFAULT_ROOF_ROTATION}
+                                onChange={(e) => handleBuildingRoofRotationChange(e, building.id)}
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                              <span className="polygon-list-building-roof-rotation-value">
+                                {building.roofRotation ?? DEFAULT_ROOF_ROTATION}°
+                              </span>
+                            </div>
+                          )}
+                        </>
+                      )}
                     </div>
                   ))}
                 </div>

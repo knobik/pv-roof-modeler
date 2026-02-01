@@ -338,3 +338,141 @@
 .polygon-list-building-height-input[type="number"] {
   -moz-appearance: textfield;
 }
+
+/* Roof type dropdown */
+.polygon-list-building-roof-type {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.polygon-list-building-roof-type-label {
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.4);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.polygon-list-building-roof-type-select {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 8px;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  color: rgba(0, 0, 0, 0.8);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.polygon-list-building-roof-type-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+/* Roof pitch slider */
+.polygon-list-building-roof-pitch {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.polygon-list-building-roof-pitch-label {
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.4);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.polygon-list-building-roof-pitch-slider {
+  flex: 1;
+  min-width: 0;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.polygon-list-building-roof-pitch-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  background: #3b82f6;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.polygon-list-building-roof-pitch-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  background: #3b82f6;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.polygon-list-building-roof-pitch-value {
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.6);
+  min-width: 28px;
+  text-align: right;
+}
+
+/* Roof rotation slider */
+.polygon-list-building-roof-rotation {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.polygon-list-building-roof-rotation-label {
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.4);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.polygon-list-building-roof-rotation-slider {
+  flex: 1;
+  min-width: 0;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.polygon-list-building-roof-rotation-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  background: #10b981;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.polygon-list-building-roof-rotation-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  background: #10b981;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.polygon-list-building-roof-rotation-value {
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.6);
+  min-width: 28px;
+  text-align: right;
+}

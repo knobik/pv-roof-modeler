@@ -1,6 +1,7 @@
 import { useCallback } from 'react'
 import type { ToolHookReturn, BuildingToolState } from '../types'
 import type { Building } from '../../types'
+import { DEFAULT_ROOF_TYPE, DEFAULT_ROOF_PITCH } from '../../constants'
 import { useCanvasContext } from '../../context/CanvasContext'
 
 export interface BuildingToolExtended extends ToolHookReturn<BuildingToolState> {
@@ -23,8 +24,10 @@ export function useBuildingTool(): BuildingToolExtended {
         id: crypto.randomUUID(),
         polygonId: polygon.id,
         points: polygon.points.map((p) => p.clone()),
-        height: 0.5,  // default height
+        height: 0.5, // default height
         color: polygon.color,
+        roofType: DEFAULT_ROOF_TYPE,
+        roofPitch: DEFAULT_ROOF_PITCH,
       }
 
       setBuildings([...buildings, newBuilding])
