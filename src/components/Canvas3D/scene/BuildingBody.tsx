@@ -2,8 +2,7 @@ import { useState, useCallback, useMemo } from 'react'
 import { ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
 import type { Building } from '../types'
-import { PLANE_WIDTH, DEFAULT_ROOF_TYPE, DEFAULT_ROOF_PITCH, DEFAULT_ROOF_ROTATION } from '../constants'
-import { createRoofGeometry } from './roofs'
+import { PLANE_WIDTH } from '../constants'
 
 export interface BuildingBodyProps {
   building: Building
@@ -74,26 +73,26 @@ export function BuildingBody({
     return new THREE.ExtrudeGeometry(shape, extrudeSettings)
   }, [building.points, building.height])
 
-  // Create roof geometry using factory
-  const roofResult = useMemo(() => {
-    const roofType = building.roofType ?? DEFAULT_ROOF_TYPE
-    const roofPitch = building.roofPitch ?? DEFAULT_ROOF_PITCH
-    const roofRotation = building.roofRotation ?? DEFAULT_ROOF_ROTATION
-
-    return createRoofGeometry(roofType, {
-      points: building.points,
-      wallHeight: building.height,
-      roofPitch,
-      roofRotation,
-    })
-  }, [building.points, building.height, building.roofType, building.roofPitch, building.roofRotation])
-
-  // Apply UV mapping to roof geometry for aerial texture projection
+  // Create flat roof geometry (simple cap at top of walls)
   const roofGeometry = useMemo(() => {
-    const geo = roofResult.roofMesh.clone()
-    applyAerialUVs(geo, aspectRatio)
-    return geo
-  }, [roofResult.roofMesh, aspectRatio])
+    const shape = new THREE.Shape()
+    const firstPoint = building.points[0]
+    shape.moveTo(firstPoint.x, -firstPoint.z)
+
+    for (let i = 1; i < building.points.length; i++) {
+      shape.lineTo(building.points[i].x, -building.points[i].z)
+    }
+    shape.closePath()
+
+    const geometry = new THREE.ShapeGeometry(shape)
+    // Rotate to be horizontal and position at top of walls
+    geometry.rotateX(-Math.PI / 2)
+    geometry.translate(0, building.height, 0)
+
+    applyAerialUVs(geometry, aspectRatio)
+
+    return geometry
+  }, [building.points, building.height, aspectRatio])
 
   const handleContextMenu = useCallback(
     (e: ThreeEvent<MouseEvent>) => {
@@ -124,7 +123,7 @@ export function BuildingBody({
         <meshStandardMaterial color={wallColor} side={THREE.DoubleSide} />
       </mesh>
 
-      {/* Roof surface */}
+      {/* Roof surface (flat cap) */}
       <mesh geometry={roofGeometry} castShadow={castShadow} receiveShadow={castShadow}>
         {texture ? (
           <meshBasicMaterial map={texture} side={THREE.DoubleSide} />
@@ -132,13 +131,6 @@ export function BuildingBody({
           <meshStandardMaterial color={building.color} side={THREE.DoubleSide} />
         )}
       </mesh>
-
-      {/* Gable walls (for gabled, half-hip roofs) */}
-      {roofResult.gableMesh && (
-        <mesh geometry={roofResult.gableMesh} castShadow={castShadow} receiveShadow={castShadow}>
-          <meshStandardMaterial color={wallColor} side={THREE.DoubleSide} />
-        </mesh>
-      )}
     </group>
   )
 }

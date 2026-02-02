@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Canvas3D } from '../Canvas3D'
-import type { Canvas3DProps, Polygon, Building, RoofType } from '../Canvas3D'
+import type { Canvas3DProps, Polygon, Building } from '../Canvas3D'
 import { PolygonList } from '../PolygonList'
 import { HistoryProvider, useHistoryOptional } from '../../hooks/useHistory'
 import type { HistoryContextValue } from '../../hooks/useHistory'
@@ -106,7 +106,6 @@ function PVRoofModelerInner({
 
   // Track if we're currently dragging sliders for batch operations
   const isDraggingHeightRef = useRef(false)
-  const isDraggingPitchRef = useRef(false)
 
   // Determine which state to use
   const polygons = isPolygonsControlled
@@ -278,77 +277,11 @@ function PVRoofModelerInner({
     [buildings, history, isBuildingsControlled, onBuildingsChange]
   )
 
-  const handleBuildingRoofTypeChange = useCallback(
-    (buildingId: string, roofType: RoofType) => {
-      history?.takeSnapshot()
-
-      const newBuildings = buildings.map((b) =>
-        b.id === buildingId ? { ...b, roofType } : b
-      )
-
-      if (history && !isBuildingsControlled) {
-        history.setBuildings(newBuildings)
-      } else if (!isBuildingsControlled) {
-        setInternalBuildings(newBuildings)
-      }
-      onBuildingsChange?.(newBuildings)
-    },
-    [buildings, history, isBuildingsControlled, onBuildingsChange]
-  )
-
-  const handleBuildingRoofPitchChange = useCallback(
-    (buildingId: string, roofPitch: number) => {
-      // Start batch on first change
-      if (!isDraggingPitchRef.current) {
-        isDraggingPitchRef.current = true
-        history?.beginBatch()
-      }
-
-      const newBuildings = buildings.map((b) =>
-        b.id === buildingId ? { ...b, roofPitch } : b
-      )
-
-      if (history && !isBuildingsControlled) {
-        history.setBuildings(newBuildings)
-      } else if (!isBuildingsControlled) {
-        setInternalBuildings(newBuildings)
-      }
-      onBuildingsChange?.(newBuildings)
-    },
-    [buildings, history, isBuildingsControlled, onBuildingsChange]
-  )
-
-  const handleBuildingRoofRotationChange = useCallback(
-    (buildingId: string, roofRotation: number) => {
-      // Start batch on first change (reuse pitch ref since they're mutually exclusive)
-      if (!isDraggingPitchRef.current) {
-        isDraggingPitchRef.current = true
-        history?.beginBatch()
-      }
-
-      const newBuildings = buildings.map((b) =>
-        b.id === buildingId ? { ...b, roofRotation } : b
-      )
-
-      if (history && !isBuildingsControlled) {
-        history.setBuildings(newBuildings)
-      } else if (!isBuildingsControlled) {
-        setInternalBuildings(newBuildings)
-      }
-      onBuildingsChange?.(newBuildings)
-    },
-    [buildings, history, isBuildingsControlled, onBuildingsChange]
-  )
-
   // End batch when mouse is released anywhere
   useEffect(() => {
     const handleMouseUp = () => {
       if (isDraggingHeightRef.current) {
         isDraggingHeightRef.current = false
-        history?.endBatch()
-      }
-      if (isDraggingPitchRef.current) {
-        isDraggingPitchRef.current = false
         history?.endBatch()
       }
     }
@@ -426,9 +359,6 @@ function PVRoofModelerInner({
         onBuildingColorChange={handleBuildingColorChange}
         onBuildingHeightChange={handleBuildingHeightChange}
         onBuildingVisibilityChange={handleBuildingVisibilityChange}
-        onBuildingRoofTypeChange={handleBuildingRoofTypeChange}
-        onBuildingRoofPitchChange={handleBuildingRoofPitchChange}
-        onBuildingRoofRotationChange={handleBuildingRoofRotationChange}
       />
     </div>
   )

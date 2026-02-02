@@ -10,7 +10,7 @@ import { useToolManager } from './tools'
 import './Canvas3D.css'
 
 // Re-export types for backwards compatibility
-export type { Polygon, Building, RoofType } from './types'
+export type { Polygon, Building } from './types'
 
 export interface Canvas3DProps {
   width?: number | string
