@@ -26,7 +26,6 @@ export interface SceneProps {
   isMeasuring: boolean
   calibrationPoints: THREE.Vector3[]
   measurementPoints: THREE.Vector3[]
-  perpendicularPreview: { polygonId: string; pointIndex: number; previewPoints: THREE.Vector3[] } | null
   polygons: Polygon[]
   currentPoints: THREE.Vector3[]
   currentColor: string
@@ -65,7 +64,6 @@ export function Scene({
   isMeasuring,
   calibrationPoints,
   measurementPoints,
-  perpendicularPreview,
   polygons,
   currentPoints,
   currentColor,
@@ -142,7 +140,6 @@ export function Scene({
         currentPoints={currentPoints}
         currentColor={currentColor}
         isPerpendicular={isPerpendicular}
-        perpendicularPreview={perpendicularPreview}
         pixelsPerMeter={pixelsPerMeter}
         imageWidth={imageWidth}
         planeWidth={planeWidth}

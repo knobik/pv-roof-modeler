@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 import * as THREE from 'three'
 import type { ToolHookReturn, SelectToolState } from '../types'
 import { useCanvasContext } from '../../context/CanvasContext'
+import { applyAllPerpendicularConstraints } from '../PerpendicularTool/geometry'
 
 export interface SelectToolExtended extends ToolHookReturn<SelectToolState> {
   onPointDelete: (polygonId: string, pointIndex: number) => void
@@ -33,9 +34,19 @@ export function useSelectTool(): SelectToolExtended {
       setInternalPolygons((prev) =>
         prev.map((p) => {
           if (p.id !== polygonId) return p
-          const newPoints = [...p.points]
-          newPoints[pointIndex] = newPosition
-          return { ...p, points: newPoints }
+
+          const locks = p.perpendicularLocks ?? []
+
+          // Start with the new position for the dragged point
+          let points = p.points.map((pt, i) => (i === pointIndex ? newPosition : pt.clone()))
+
+          // If there are any locks, apply all constraints iteratively
+          // The dragged point is fixed so it won't be moved by constraints
+          if (locks.length > 0) {
+            points = applyAllPerpendicularConstraints(points, locks, [pointIndex])
+          }
+
+          return { ...p, points }
         })
       )
     },
@@ -66,7 +77,18 @@ export function useSelectTool(): SelectToolExtended {
             a > pointIndex ? a - 1 : a,
             b > pointIndex ? b - 1 : b,
           ] as [number, number])
-        return { ...p, points: newPoints, lines: newLines }
+
+        // Update perpendicular locks: remove the deleted index and adjust higher indices
+        const newLocks = (p.perpendicularLocks ?? [])
+          .filter((idx) => idx !== pointIndex)
+          .map((idx) => (idx > pointIndex ? idx - 1 : idx))
+
+        return {
+          ...p,
+          points: newPoints,
+          lines: newLines,
+          perpendicularLocks: newLocks.length > 0 ? newLocks : undefined,
+        }
       })
       setPolygons(newPolygons)
     },
@@ -85,7 +107,18 @@ export function useSelectTool(): SelectToolExtended {
           a > edgeIndex ? a + 1 : a,
           b > edgeIndex ? b + 1 : b,
         ] as [number, number])
-        return { ...p, points: newPoints, lines: newLines }
+
+        // Update perpendicular locks: adjust indices greater than edgeIndex
+        const newLocks = (p.perpendicularLocks ?? []).map((idx) =>
+          idx > edgeIndex ? idx + 1 : idx
+        )
+
+        return {
+          ...p,
+          points: newPoints,
+          lines: newLines,
+          perpendicularLocks: newLocks.length > 0 ? newLocks : undefined,
+        }
       })
       setPolygons(newPolygons)
     },

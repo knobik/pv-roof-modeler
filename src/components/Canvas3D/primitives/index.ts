@@ -15,3 +15,6 @@ export type { PolygonFillProps } from './PolygonFill'
 
 export { EdgeLabel } from './EdgeLabel'
 export type { EdgeLabelProps } from './EdgeLabel'
+
+export { PerpendicularLockIcon } from './PerpendicularLockIcon'
+export type { PerpendicularLockIconProps } from './PerpendicularLockIcon'

@@ -47,8 +47,7 @@ export interface MeasurementToolState {
 }
 
 export interface PerpendicularToolState {
-  selectedVertexInfo: { polygonId: string; pointIndex: number } | null
-  previewPoints: THREE.Vector3[] | null
+  // No state needed - locks are stored in polygon data
 }
 
 // Union of all tool states for generic use

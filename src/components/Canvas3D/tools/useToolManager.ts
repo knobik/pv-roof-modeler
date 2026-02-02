@@ -179,13 +179,11 @@ export function useToolManager(): ToolManagerReturn {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         handlers.onCancel?.()
-      } else if (e.key === 'Enter' && activeTool === 'perpendicular') {
-        perpendicularTool.applyConstraint()
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [handlers, activeTool, perpendicularTool])
+  }, [handlers])
 
   // Computed flags
   const isDrawing = activeTool === 'polygon' || activeTool === 'calibration' || activeTool === 'measurement'

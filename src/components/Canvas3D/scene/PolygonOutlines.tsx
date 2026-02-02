@@ -1,14 +1,13 @@
 import { Line } from '@react-three/drei'
 import * as THREE from 'three'
 import type { Polygon } from '../types'
-import { DraggablePoint, ClickableEdge, ClosingPoint, ScaledPoint, EdgeLabel } from '../primitives'
+import { DraggablePoint, ClickableEdge, ClosingPoint, ScaledPoint, EdgeLabel, PerpendicularLockIcon } from '../primitives'
 
 export interface PolygonOutlinesProps {
   polygons: Polygon[]
   currentPoints: THREE.Vector3[]
   currentColor: string
   isPerpendicular: boolean
-  perpendicularPreview: { polygonId: string; pointIndex: number; previewPoints: THREE.Vector3[] } | null
   pixelsPerMeter: number | null
   imageWidth: number | null
   planeWidth: number
@@ -26,7 +25,6 @@ export function PolygonOutlines({
   currentPoints,
   currentColor,
   isPerpendicular,
-  perpendicularPreview,
   pixelsPerMeter,
   imageWidth,
   planeWidth,
@@ -48,6 +46,7 @@ export function PolygonOutlines({
         if (polygon.visible === false) return null
 
         const canDeletePoints = polygon.points.length > 3
+        const locks = polygon.perpendicularLocks ?? []
 
         return (
           <group key={polygon.id}>
@@ -92,12 +91,27 @@ export function PolygonOutlines({
                 lineWidth={2}
               />
             ))}
+            {/* Perpendicular lock icons */}
+            {polygon.points.length >= 3 && locks.map((lockedIdx) => {
+              const numPoints = polygon.points.length
+              const prevIdx = (lockedIdx - 1 + numPoints) % numPoints
+              const nextIdx = (lockedIdx + 1) % numPoints
+
+              return (
+                <PerpendicularLockIcon
+                  key={`lock-${polygon.id}-${lockedIdx}`}
+                  vertex={polygon.points[lockedIdx]}
+                  prev={polygon.points[prevIdx]}
+                  next={polygon.points[nextIdx]}
+                  isClickable={isPerpendicular}
+                  onClick={() => onPointSelect(polygon.id, lockedIdx)}
+                />
+              )
+            })}
             {polygon.points.map((point, i) => {
               const nextIndex = (i + 1) % polygon.points.length
               const nextPoint = polygon.points[nextIndex]
-              const isSelected =
-                perpendicularPreview?.polygonId === polygon.id &&
-                perpendicularPreview?.pointIndex === i
+              const isLocked = locks.includes(i)
 
               return (
                 <group key={`${polygon.id}-${i}`}>
@@ -106,7 +120,7 @@ export function PolygonOutlines({
                     color={polygon.color}
                     canDelete={canDeletePoints}
                     isSelectMode={isPerpendicular}
-                    isSelected={isSelected}
+                    isSelected={isLocked}
                     onDragStart={onPointDragStart}
                     onDrag={(newPos) => onPointDrag(polygon.id, i, newPos)}
                     onDragEnd={onPointDragEnd}
@@ -127,18 +141,6 @@ export function PolygonOutlines({
           </group>
         )
       })}
-
-      {/* Perpendicular preview outline */}
-      {perpendicularPreview && perpendicularPreview.previewPoints.length >= 3 && (
-        <Line
-          points={[...perpendicularPreview.previewPoints, perpendicularPreview.previewPoints[0]]}
-          color="#00ff00"
-          lineWidth={2}
-          dashed
-          dashSize={0.05}
-          gapSize={0.03}
-        />
-      )}
 
       {currentPoints.length >= 2 && (
         <Line points={currentPoints} color={currentColor} lineWidth={2} />

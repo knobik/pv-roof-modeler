@@ -233,16 +233,6 @@ function Canvas3DInner({
           isMeasuring={isMeasuring}
           calibrationPoints={toolManager.calibrationPoints}
           measurementPoints={toolManager.measurementPoints}
-          perpendicularPreview={
-            toolManager.perpendicularTool.state.selectedVertexInfo &&
-            toolManager.perpendicularTool.state.previewPoints
-              ? {
-                  polygonId: toolManager.perpendicularTool.state.selectedVertexInfo.polygonId,
-                  pointIndex: toolManager.perpendicularTool.state.selectedVertexInfo.pointIndex,
-                  previewPoints: toolManager.perpendicularTool.state.previewPoints,
-                }
-              : null
-          }
           polygons={polygons}
           currentPoints={toolManager.currentPoints}
           currentColor={currentColor}
