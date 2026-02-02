@@ -9,8 +9,6 @@ export interface ToolActions {
   onPlaneClick?: (point: THREE.Vector3) => void
   onPointClick?: (polygonId: string, pointIndex: number) => void
   onEdgeClick?: (polygonId: string, edgeIndex: number, position: THREE.Vector3) => void
-  onPolygonClick?: (polygonId: string) => void
-  onBuildingClick?: (buildingId: string) => void
 
   // Drag events
   onPointDragStart?: () => void
@@ -31,14 +29,6 @@ export interface PolygonToolState {
   currentColor: string
   canFinish: boolean
   canUndo: boolean
-}
-
-export interface LineToolState {
-  selectedLinePoints: { polygonId: string; pointIndex: number } | null
-}
-
-export interface BuildingToolState {
-  // Building tool has no exposed state
 }
 
 export interface CalibrationToolState {
@@ -65,8 +55,6 @@ export interface PerpendicularToolState {
 export type ToolState =
   | SelectToolState
   | PolygonToolState
-  | LineToolState
-  | BuildingToolState
   | CalibrationToolState
   | MeasurementToolState
   | PerpendicularToolState

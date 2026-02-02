@@ -1,12 +1,11 @@
 import { useMemo } from 'react'
 import { OrbitControls, Line } from '@react-three/drei'
 import * as THREE from 'three'
-import type { Polygon, Building } from '../types'
+import type { Polygon } from '../types'
 import { SunLight } from './SunLight'
 import { ImagePlane } from './ImagePlane'
 import { GridHelper } from './GridHelper'
 import { Compass } from './Compass'
-import { BuildingBodies } from './BuildingBodies'
 import { PolygonOutlines } from './PolygonOutlines'
 import { ScaledPoint } from '../primitives'
 
@@ -22,17 +21,13 @@ export interface SceneProps {
   longitude?: number
   date?: Date
   isAddingPolygon: boolean
-  isAddingLine: boolean
-  isAddingBuilding: boolean
   isPerpendicular: boolean
   isCalibrating: boolean
   isMeasuring: boolean
   calibrationPoints: THREE.Vector3[]
   measurementPoints: THREE.Vector3[]
-  selectedLinePoints: { polygonId: string; pointIndex: number } | null
   perpendicularPreview: { polygonId: string; pointIndex: number; previewPoints: THREE.Vector3[] } | null
   polygons: Polygon[]
-  buildings: Building[]
   currentPoints: THREE.Vector3[]
   currentColor: string
   pixelsPerMeter: number | null
@@ -48,8 +43,6 @@ export interface SceneProps {
   onAddPointOnEdge: (polygonId: string, edgeIndex: number, position: THREE.Vector3) => void
   onPointSelect: (polygonId: string, pointIndex: number) => void
   onClosePolygon: () => void
-  onPolygonClick: (polygonId: string) => void
-  onDeleteBuilding: (buildingId: string) => void
   orbitControlsRef: React.RefObject<React.ComponentRef<typeof OrbitControls> | null>
   isDraggingPoint: boolean
   onCompassRotationChange: (angle: number) => void
@@ -67,17 +60,13 @@ export function Scene({
   longitude,
   date,
   isAddingPolygon,
-  isAddingLine,
-  isAddingBuilding,
   isPerpendicular,
   isCalibrating,
   isMeasuring,
   calibrationPoints,
   measurementPoints,
-  selectedLinePoints,
   perpendicularPreview,
   polygons,
-  buildings,
   currentPoints,
   currentColor,
   pixelsPerMeter,
@@ -93,13 +82,11 @@ export function Scene({
   onAddPointOnEdge,
   onPointSelect,
   onClosePolygon,
-  onPolygonClick,
-  onDeleteBuilding,
   orbitControlsRef,
   isDraggingPoint,
   onCompassRotationChange,
 }: SceneProps) {
-  const orbitEnabled = !isAddingPolygon && !isAddingLine && !isAddingBuilding && !isPerpendicular && !isCalibrating && !isMeasuring && !isDraggingPoint
+  const orbitEnabled = !isAddingPolygon && !isPerpendicular && !isCalibrating && !isMeasuring && !isDraggingPoint
 
   // Ambient light intensity adjusts based on time of day
   const ambientIntensity = useMemo(() => {
@@ -150,22 +137,11 @@ export function Scene({
       {measurementPoints.length >= 1 && (
         <MeasurementLine measurementPoints={measurementPoints} />
       )}
-      <BuildingBodies
-        buildings={buildings}
-        isAddingBuilding={isAddingBuilding}
-        imageUrl={imageUrl}
-        aspectRatio={aspectRatio}
-        castShadow={shadows}
-        onDeleteBuilding={onDeleteBuilding}
-      />
       <PolygonOutlines
         polygons={polygons}
         currentPoints={currentPoints}
         currentColor={currentColor}
-        isAddingLine={isAddingLine}
-        isAddingBuilding={isAddingBuilding}
         isPerpendicular={isPerpendicular}
-        selectedLinePoints={selectedLinePoints}
         perpendicularPreview={perpendicularPreview}
         pixelsPerMeter={pixelsPerMeter}
         imageWidth={imageWidth}
@@ -177,7 +153,6 @@ export function Scene({
         onAddPointOnEdge={onAddPointOnEdge}
         onPointSelect={onPointSelect}
         onClosePolygon={onClosePolygon}
-        onPolygonClick={onPolygonClick}
       />
 
       <OrbitControls

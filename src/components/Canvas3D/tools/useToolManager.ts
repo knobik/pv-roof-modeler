@@ -4,8 +4,6 @@ import type { ToolName } from '../types'
 import type { ToolActions, ToolHookReturn, ToolState } from './types'
 import { useSelectTool, type SelectToolExtended } from './SelectTool/useSelectTool'
 import { usePolygonTool, type PolygonToolExtended } from './PolygonTool/usePolygonTool'
-import { useLineTool } from './LineTool/useLineTool'
-import { useBuildingTool, type BuildingToolExtended } from './BuildingTool/useBuildingTool'
 import { useCalibrationTool, type CalibrationToolExtended } from './CalibrationTool/useCalibrationTool'
 import { useMeasurementTool, type MeasurementToolExtended } from './MeasurementTool/useMeasurementTool'
 import { usePerpendicularTool, type PerpendicularToolExtended } from './PerpendicularTool/usePerpendicularTool'
@@ -13,7 +11,6 @@ import { useToolContext } from '../context/ToolContext'
 import { useCanvasContext } from '../context/CanvasContext'
 
 export type { PolygonToolExtended } from './PolygonTool/usePolygonTool'
-export type { BuildingToolExtended } from './BuildingTool/useBuildingTool'
 export type { CalibrationToolExtended } from './CalibrationTool/useCalibrationTool'
 export type { MeasurementToolExtended } from './MeasurementTool/useMeasurementTool'
 export type { PerpendicularToolExtended } from './PerpendicularTool/usePerpendicularTool'
@@ -43,13 +40,10 @@ export interface ToolManagerReturn {
   currentColor: string
   calibrationPoints: THREE.Vector3[]
   measurementPoints: THREE.Vector3[]
-  selectedLinePoints: { polygonId: string; pointIndex: number } | null
 
   // Individual tool instances for direct access
   selectTool: SelectToolExtended
   polygonTool: PolygonToolExtended
-  lineTool: ToolHookReturn
-  buildingTool: BuildingToolExtended
   calibrationTool: CalibrationToolExtended
   measurementTool: MeasurementToolExtended
   perpendicularTool: PerpendicularToolExtended
@@ -65,7 +59,6 @@ export function useToolManager(): ToolManagerReturn {
     currentPoints,
     calibrationPoints,
     measurementPoints,
-    selectedLinePoints,
   } = toolContext
 
   const { isDraggingPoint } = canvasContext
@@ -73,8 +66,6 @@ export function useToolManager(): ToolManagerReturn {
   // Initialize all tool hooks - they now use context internally
   const selectTool = useSelectTool()
   const polygonTool = usePolygonTool()
-  const lineTool = useLineTool()
-  const buildingTool = useBuildingTool()
   const calibrationTool = useCalibrationTool()
   const measurementTool = useMeasurementTool()
   const perpendicularTool = usePerpendicularTool()
@@ -83,12 +74,10 @@ export function useToolManager(): ToolManagerReturn {
   const tools = useMemo(() => ({
     select: selectTool,
     polygon: polygonTool,
-    line: lineTool,
-    building: buildingTool,
     calibration: calibrationTool,
     measurement: measurementTool,
     perpendicular: perpendicularTool,
-  }), [selectTool, polygonTool, lineTool, buildingTool, calibrationTool, measurementTool, perpendicularTool])
+  }), [selectTool, polygonTool, calibrationTool, measurementTool, perpendicularTool])
 
   const getToolByName = useCallback((name: ToolName): ToolHookReturn<ToolState> => {
     return tools[name]
@@ -129,11 +118,9 @@ export function useToolManager(): ToolManagerReturn {
       }
     },
 
-    // Point click - line tool and perpendicular tool
+    // Point click - perpendicular tool
     onPointClick: (polygonId: string, pointIndex: number) => {
-      if (activeTool === 'line') {
-        lineTool.actions.onPointClick?.(polygonId, pointIndex)
-      } else if (activeTool === 'perpendicular') {
+      if (activeTool === 'perpendicular') {
         perpendicularTool.actions.onPointClick?.(polygonId, pointIndex)
       }
     },
@@ -142,20 +129,6 @@ export function useToolManager(): ToolManagerReturn {
     onEdgeClick: (polygonId: string, edgeIndex: number, position: THREE.Vector3) => {
       if (activeTool === 'select') {
         selectTool.actions.onEdgeClick?.(polygonId, edgeIndex, position)
-      }
-    },
-
-    // Polygon click - building tool
-    onPolygonClick: (polygonId: string) => {
-      if (activeTool === 'building') {
-        buildingTool.actions.onPolygonClick?.(polygonId)
-      }
-    },
-
-    // Building click - building tool (for deletion)
-    onBuildingClick: (buildingId: string) => {
-      if (activeTool === 'building') {
-        buildingTool.actions.onBuildingClick?.(buildingId)
       }
     },
 
@@ -195,8 +168,6 @@ export function useToolManager(): ToolManagerReturn {
     activeTool,
     selectTool,
     polygonTool,
-    lineTool,
-    buildingTool,
     calibrationTool,
     measurementTool,
     perpendicularTool,
@@ -234,11 +205,8 @@ export function useToolManager(): ToolManagerReturn {
     currentColor,
     calibrationPoints,
     measurementPoints,
-    selectedLinePoints,
     selectTool,
     polygonTool,
-    lineTool,
-    buildingTool,
     calibrationTool,
     measurementTool,
     perpendicularTool,

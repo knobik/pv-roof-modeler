@@ -7,10 +7,6 @@ export interface ToolContextValue {
   activeTool: ToolName
   setActiveTool: (tool: ToolName) => void
 
-  // Selected line points (for line tool)
-  selectedLinePoints: { polygonId: string; pointIndex: number } | null
-  setSelectedLinePoints: (points: { polygonId: string; pointIndex: number } | null) => void
-
   // Polygon tool state
   currentPoints: THREE.Vector3[]
   setCurrentPoints: React.Dispatch<React.SetStateAction<THREE.Vector3[]>>
@@ -41,10 +37,6 @@ export interface ToolProviderProps {
 
 export function ToolProvider({ children }: ToolProviderProps) {
   const [activeTool, setActiveTool] = useState<ToolName>('select')
-  const [selectedLinePoints, setSelectedLinePoints] = useState<{
-    polygonId: string
-    pointIndex: number
-  } | null>(null)
   const [currentPoints, setCurrentPoints] = useState<THREE.Vector3[]>([])
   const [calibrationPoints, setCalibrationPoints] = useState<THREE.Vector3[]>([])
   const [knownLength, setKnownLength] = useState<number>(4.5)
@@ -62,15 +54,12 @@ export function ToolProvider({ children }: ToolProviderProps) {
     if (activeTool === 'measurement') {
       setMeasurementPoints([])
     }
-    setSelectedLinePoints(null)
     setActiveTool(tool)
   }, [activeTool, currentPoints.length])
 
   const value = useMemo<ToolContextValue>(() => ({
     activeTool,
     setActiveTool,
-    selectedLinePoints,
-    setSelectedLinePoints,
     currentPoints,
     setCurrentPoints,
     calibrationPoints,
@@ -86,7 +75,6 @@ export function ToolProvider({ children }: ToolProviderProps) {
     handleSelectTool,
   }), [
     activeTool,
-    selectedLinePoints,
     currentPoints,
     calibrationPoints,
     knownLength,

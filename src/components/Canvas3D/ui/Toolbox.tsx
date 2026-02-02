@@ -1,6 +1,6 @@
 import type { ToolName } from '../types'
 import type { HistoryContextValue } from '../../../hooks/useHistory'
-import { IconCursor, IconPolygon, IconLine, IconBuilding, IconCalibration, IconMeasurement, IconPerpendicular, IconUndo, IconRedo } from './Icons'
+import { IconCursor, IconPolygon, IconCalibration, IconMeasurement, IconPerpendicular, IconUndo, IconRedo } from './Icons'
 
 export interface ToolboxProps {
   activeTool: ToolName
@@ -35,15 +35,6 @@ export function Toolbox({
         <span className="canvas3d-tool-tooltip">Add Polygon (P)</span>
       </button>
       <button
-        className={`canvas3d-tool ${activeTool === 'line' ? 'canvas3d-tool--active' : ''}`}
-        onClick={() => onSelectTool('line')}
-        disabled={polygonsCount === 0}
-        title="Add Line"
-      >
-        <IconLine />
-        <span className="canvas3d-tool-tooltip">Add Line (L)</span>
-      </button>
-      <button
         className={`canvas3d-tool ${activeTool === 'perpendicular' ? 'canvas3d-tool--active' : ''}`}
         onClick={() => onSelectTool('perpendicular')}
         disabled={polygonsCount === 0}
@@ -51,15 +42,6 @@ export function Toolbox({
       >
         <IconPerpendicular />
         <span className="canvas3d-tool-tooltip">Perpendicular (R)</span>
-      </button>
-      <button
-        className={`canvas3d-tool ${activeTool === 'building' ? 'canvas3d-tool--active' : ''}`}
-        onClick={() => onSelectTool('building')}
-        disabled={polygonsCount === 0}
-        title="Add Building"
-      >
-        <IconBuilding />
-        <span className="canvas3d-tool-tooltip">Add Building (B)</span>
       </button>
       <div className="canvas3d-toolbox-divider" />
       <button

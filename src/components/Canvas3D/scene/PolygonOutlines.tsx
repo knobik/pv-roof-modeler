@@ -1,16 +1,13 @@
 import { Line } from '@react-three/drei'
 import * as THREE from 'three'
 import type { Polygon } from '../types'
-import { DraggablePoint, ClickableEdge, ClosingPoint, ScaledPoint, PolygonFill, EdgeLabel } from '../primitives'
+import { DraggablePoint, ClickableEdge, ClosingPoint, ScaledPoint, EdgeLabel } from '../primitives'
 
 export interface PolygonOutlinesProps {
   polygons: Polygon[]
   currentPoints: THREE.Vector3[]
   currentColor: string
-  isAddingLine: boolean
-  isAddingBuilding: boolean
   isPerpendicular: boolean
-  selectedLinePoints: { polygonId: string; pointIndex: number } | null
   perpendicularPreview: { polygonId: string; pointIndex: number; previewPoints: THREE.Vector3[] } | null
   pixelsPerMeter: number | null
   imageWidth: number | null
@@ -22,17 +19,13 @@ export interface PolygonOutlinesProps {
   onAddPointOnEdge: (polygonId: string, edgeIndex: number, position: THREE.Vector3) => void
   onPointSelect: (polygonId: string, pointIndex: number) => void
   onClosePolygon: () => void
-  onPolygonClick: (polygonId: string) => void
 }
 
 export function PolygonOutlines({
   polygons,
   currentPoints,
   currentColor,
-  isAddingLine,
-  isAddingBuilding,
   isPerpendicular,
-  selectedLinePoints,
   perpendicularPreview,
   pixelsPerMeter,
   imageWidth,
@@ -44,7 +37,6 @@ export function PolygonOutlines({
   onAddPointOnEdge,
   onPointSelect,
   onClosePolygon,
-  onPolygonClick,
 }: PolygonOutlinesProps) {
   const canClose = currentPoints.length >= 3
   const showEdgeLabels = pixelsPerMeter !== null && imageWidth !== null
@@ -59,14 +51,6 @@ export function PolygonOutlines({
 
         return (
           <group key={polygon.id}>
-            {/* Clickable polygon fill for building tool */}
-            {isAddingBuilding && polygon.points.length >= 3 && (
-              <PolygonFill
-                points={polygon.points}
-                color={polygon.color}
-                onClick={() => onPolygonClick(polygon.id)}
-              />
-            )}
             {/* Outline */}
             {polygon.points.length >= 2 && (
               <Line
@@ -111,13 +95,9 @@ export function PolygonOutlines({
             {polygon.points.map((point, i) => {
               const nextIndex = (i + 1) % polygon.points.length
               const nextPoint = polygon.points[nextIndex]
-              const isSelectedForLine =
-                selectedLinePoints?.polygonId === polygon.id &&
-                selectedLinePoints?.pointIndex === i
-              const isSelectedForPerpendicular =
+              const isSelected =
                 perpendicularPreview?.polygonId === polygon.id &&
                 perpendicularPreview?.pointIndex === i
-              const isSelected = isSelectedForLine || isSelectedForPerpendicular
 
               return (
                 <group key={`${polygon.id}-${i}`}>
@@ -125,7 +105,7 @@ export function PolygonOutlines({
                     position={point}
                     color={polygon.color}
                     canDelete={canDeletePoints}
-                    isSelectMode={isAddingLine || isPerpendicular}
+                    isSelectMode={isPerpendicular}
                     isSelected={isSelected}
                     onDragStart={onPointDragStart}
                     onDrag={(newPos) => onPointDrag(polygon.id, i, newPos)}
@@ -133,7 +113,7 @@ export function PolygonOutlines({
                     onDelete={() => onPointDelete(polygon.id, i)}
                     onSelect={() => onPointSelect(polygon.id, i)}
                   />
-                  {!isAddingLine && !isAddingBuilding && !isPerpendicular && (
+                  {!isPerpendicular && (
                     <ClickableEdge
                       start={point}
                       end={nextPoint}

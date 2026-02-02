@@ -1,26 +1,18 @@
-import { useCallback, useState } from 'react'
-import type { Polygon, Building } from '../Canvas3D/Canvas3D'
+import { useCallback } from 'react'
+import type { Polygon } from '../Canvas3D/Canvas3D'
 import './PolygonList.css'
-
-// The image plane width in Three.js units (must match Canvas3D PLANE_WIDTH)
-const PLANE_WIDTH = 5
 
 export interface PolygonListProps {
   polygons: Polygon[]
-  buildings?: Building[]
   selectedPolygonId?: string | null
-  /** Pixels per meter ratio for height conversion */
+  /** Pixels per meter ratio for distance conversion */
   pixelsPerMeter?: number
-  /** Image width in pixels for height conversion */
+  /** Image width in pixels for distance conversion */
   imageWidth?: number
   onSelectPolygon?: (polygonId: string | null) => void
   onDeletePolygon?: (polygonId: string) => void
   onPolygonColorChange?: (polygonId: string, color: string) => void
   onPolygonVisibilityChange?: (polygonId: string, visible: boolean) => void
-  onDeleteBuilding?: (buildingId: string) => void
-  onBuildingColorChange?: (buildingId: string, color: string) => void
-  onBuildingHeightChange?: (buildingId: string, height: number) => void
-  onBuildingVisibilityChange?: (buildingId: string, visible: boolean) => void
 }
 
 const IconTrash = () => (
@@ -33,26 +25,6 @@ const IconTrash = () => (
 const IconPolygon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <polygon points="12,2 22,8.5 18,21 6,21 2,8.5" />
-  </svg>
-)
-
-const IconBuilding = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M12 2L2 7v10l10 5 10-5V7L12 2z" />
-    <path d="M2 7l10 5 10-5" />
-    <path d="M12 12v10" />
-  </svg>
-)
-
-const IconChevron = ({ expanded }: { expanded: boolean }) => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    className={`polygon-list-chevron ${expanded ? 'polygon-list-chevron--expanded' : ''}`}
-  >
-    <polyline points="9,18 15,12 9,6" />
   </svg>
 )
 
@@ -72,58 +44,12 @@ const IconEyeOff = () => (
 
 export function PolygonList({
   polygons,
-  buildings = [],
   selectedPolygonId,
-  pixelsPerMeter,
-  imageWidth,
   onSelectPolygon,
   onDeletePolygon,
   onPolygonColorChange,
   onPolygonVisibilityChange,
-  onDeleteBuilding,
-  onBuildingColorChange,
-  onBuildingHeightChange,
-  onBuildingVisibilityChange,
 }: PolygonListProps) {
-  // Track collapsed items instead of expanded - this way items start expanded by default
-  const [collapsedPolygons, setCollapsedPolygons] = useState<Set<string>>(new Set())
-
-  // Calculate units per meter for height conversion
-  // unitsPerMeter = PLANE_WIDTH * pixelsPerMeter / imageWidth
-  const unitsPerMeter = pixelsPerMeter && imageWidth
-    ? (PLANE_WIDTH * pixelsPerMeter) / imageWidth
-    : null
-
-  // Convert height from Three.js units to meters
-  const unitsToMeters = useCallback(
-    (units: number): number => {
-      if (!unitsPerMeter) return units
-      return units / unitsPerMeter
-    },
-    [unitsPerMeter]
-  )
-
-  // Convert height from meters to Three.js units
-  const metersToUnits = useCallback(
-    (meters: number): number => {
-      if (!unitsPerMeter) return meters
-      return meters * unitsPerMeter
-    },
-    [unitsPerMeter]
-  )
-
-  const toggleExpanded = useCallback((polygonId: string) => {
-    setCollapsedPolygons((prev) => {
-      const next = new Set(prev)
-      if (next.has(polygonId)) {
-        next.delete(polygonId)
-      } else {
-        next.add(polygonId)
-      }
-      return next
-    })
-  }, [])
-
   const handleSelect = useCallback(
     (polygonId: string) => {
       if (selectedPolygonId === polygonId) {
@@ -151,54 +77,12 @@ export function PolygonList({
     [onPolygonColorChange]
   )
 
-  const handleBuildingDelete = useCallback(
-    (e: React.MouseEvent, buildingId: string) => {
-      e.stopPropagation()
-      onDeleteBuilding?.(buildingId)
-    },
-    [onDeleteBuilding]
-  )
-
-  const handleBuildingColorChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>, buildingId: string) => {
-      e.stopPropagation()
-      onBuildingColorChange?.(buildingId, e.target.value)
-    },
-    [onBuildingColorChange]
-  )
-
-  const handleBuildingHeightChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>, buildingId: string) => {
-      e.stopPropagation()
-      const inputValue = parseFloat(e.target.value)
-      if (!isNaN(inputValue) && inputValue > 0) {
-        // Convert from meters to units if conversion is available
-        const heightInUnits = metersToUnits(inputValue)
-        onBuildingHeightChange?.(buildingId, heightInUnits)
-      }
-    },
-    [onBuildingHeightChange, metersToUnits]
-  )
-
   const handlePolygonVisibilityToggle = useCallback(
     (e: React.MouseEvent, polygonId: string, currentVisible: boolean) => {
       e.stopPropagation()
       onPolygonVisibilityChange?.(polygonId, !currentVisible)
     },
     [onPolygonVisibilityChange]
-  )
-
-  const handleBuildingVisibilityToggle = useCallback(
-    (e: React.MouseEvent, buildingId: string, currentVisible: boolean) => {
-      e.stopPropagation()
-      onBuildingVisibilityChange?.(buildingId, !currentVisible)
-    },
-    [onBuildingVisibilityChange]
-  )
-
-  const getBuildingsForPolygon = useCallback(
-    (polygonId: string) => buildings.filter((b) => b.polygonId === polygonId),
-    [buildings]
   )
 
   if (polygons.length === 0) {
@@ -226,9 +110,6 @@ export function PolygonList({
           const isSelected = selectedPolygonId === polygon.id
           const pointCount = polygon.points.length
           const lineCount = polygon.lines?.length || 0
-          const polygonBuildings = getBuildingsForPolygon(polygon.id)
-          const hasChildren = polygonBuildings.length > 0
-          const isExpanded = hasChildren && !collapsedPolygons.has(polygon.id)
 
           return (
             <div key={polygon.id} className="polygon-list-tree-item">
@@ -236,18 +117,7 @@ export function PolygonList({
                 className={`polygon-list-item ${isSelected ? 'polygon-list-item--selected' : ''}`}
                 onClick={() => handleSelect(polygon.id)}
               >
-                {hasChildren && (
-                  <button
-                    className="polygon-list-expand-btn"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      toggleExpanded(polygon.id)
-                    }}
-                  >
-                    <IconChevron expanded={isExpanded} />
-                  </button>
-                )}
-                {!hasChildren && <div className="polygon-list-expand-placeholder" />}
+                <div className="polygon-list-expand-placeholder" />
                 <div className="polygon-list-item-icon">
                   <IconPolygon />
                 </div>
@@ -255,7 +125,6 @@ export function PolygonList({
                   <div className="polygon-list-item-name">Polygon {index + 1}</div>
                   <div className="polygon-list-item-meta">
                     {pointCount} points{lineCount > 0 && ` • ${lineCount} lines`}
-                    {polygonBuildings.length > 0 && ` • ${polygonBuildings.length} building`}
                   </div>
                 </div>
                 <input
@@ -281,69 +150,6 @@ export function PolygonList({
                   <IconTrash />
                 </button>
               </div>
-
-              {hasChildren && isExpanded && (
-                <div className="polygon-list-children">
-                  {polygonBuildings.map((building, buildingIndex) => (
-                    <div key={building.id} className="polygon-list-building-item">
-                      <div className="polygon-list-building-row">
-                        <div className="polygon-list-building-icon">
-                          <IconBuilding />
-                        </div>
-                        <div className="polygon-list-building-info">
-                          <div className="polygon-list-building-name">Building {buildingIndex + 1}</div>
-                        </div>
-                        <input
-                          type="color"
-                          className="polygon-list-item-color"
-                          value={building.color}
-                          onChange={(e) => handleBuildingColorChange(e, building.id)}
-                          onClick={(e) => e.stopPropagation()}
-                          title="Change color"
-                        />
-                        <button
-                          className={`polygon-list-item-visibility ${building.visible === false ? 'polygon-list-item-visibility--hidden' : ''}`}
-                          onClick={(e) => handleBuildingVisibilityToggle(e, building.id, building.visible !== false)}
-                          title={building.visible === false ? 'Show building' : 'Hide building'}
-                        >
-                          {building.visible === false ? <IconEyeOff /> : <IconEye />}
-                        </button>
-                        <button
-                          className="polygon-list-item-delete"
-                          onClick={(e) => handleBuildingDelete(e, building.id)}
-                          title="Delete building"
-                        >
-                          <IconTrash />
-                        </button>
-                      </div>
-                      <div className="polygon-list-building-height">
-                        <label className="polygon-list-building-height-label">
-                          Height{unitsPerMeter ? ' (m)' : ''}
-                        </label>
-                        <input
-                          type="range"
-                          className="polygon-list-building-height-slider"
-                          min={unitsPerMeter ? '0.5' : '0.1'}
-                          max={unitsPerMeter ? '20' : '3'}
-                          step={unitsPerMeter ? '0.5' : '0.05'}
-                          value={unitsToMeters(building.height)}
-                          onChange={(e) => handleBuildingHeightChange(e, building.id)}
-                          title={`Height: ${unitsToMeters(building.height).toFixed(2)}${unitsPerMeter ? 'm' : ''}`}
-                        />
-                        <input
-                          type="number"
-                          className="polygon-list-building-height-input"
-                          min={unitsPerMeter ? '0.1' : '0.1'}
-                          max={unitsPerMeter ? '50' : '10'}
-                          step={unitsPerMeter ? '0.1' : '0.1'}
-                          value={parseFloat(unitsToMeters(building.height).toFixed(2))}
-                          onChange={(e) => handleBuildingHeightChange(e, building.id)}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           )
         })}
